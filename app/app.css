@@ -266,7 +266,7 @@ i {
 
 #contact {
   max-width: 40rem;
-  display: flex;
+  /* display: flex; */
 }
 
 #contact h1 {

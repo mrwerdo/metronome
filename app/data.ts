@@ -1,316 +1,212 @@
-////////////////////////////////////////////////////////////////////////////////
-// 🛑 Nothing in here has anything to do with Remix, it's just a fake database
-////////////////////////////////////////////////////////////////////////////////
-
 import { matchSorter } from "match-sorter";
 // @ts-expect-error - no types, but it's a tiny function
 import sortBy from "sort-by";
 import invariant from "tiny-invariant";
 
-type ContactMutation = {
-  id?: string;
-  first?: string;
-  last?: string;
-  avatar?: string;
-  twitter?: string;
-  notes?: string;
-  favorite?: boolean;
-};
+export type BarMutation = {
+  id?: number
+  name?: string
+  bpm?: number
+  timeSignature?: [number, number]
+  subBeats?: number
+  delay?: number
+  numberOfBars?: number
+}
 
-export type ContactRecord = ContactMutation & {
-  id: string;
+export type BarRecord = BarMutation & {
+  id: number,
   createdAt: string;
-};
+}
 
-////////////////////////////////////////////////////////////////////////////////
-// This is just a fake DB table. In a real app you'd be talking to a real db or
-// fetching from an existing API.
-const fakeContacts = {
-  records: {} as Record<string, ContactRecord>,
+export type SongMutation = {
+    id?: string 
+    name?: string
+    favorite?: boolean
+    instrument?: string
+    bars?: Array<BarMutation>
+}
 
-  async getAll(): Promise<ContactRecord[]> {
-    return Object.keys(fakeContacts.records)
-      .map((key) => fakeContacts.records[key])
+export type SongRecord = SongMutation & {
+  id: string
+  createdAt: string
+}
+
+const metronomeDatabase = {
+  records: {} as Record<string, SongRecord>,
+
+  async getAll(): Promise<SongRecord[]> {
+    return Object.keys(metronomeDatabase.records)
+      .map((key) => metronomeDatabase.records[key])
       .sort(sortBy("-createdAt", "last"));
   },
 
-  async get(id: string): Promise<ContactRecord | null> {
-    return fakeContacts.records[id] || null;
+  async get(id: string): Promise<SongRecord | null> {
+    return metronomeDatabase.records[id] || null;
   },
 
-  async create(values: ContactMutation): Promise<ContactRecord> {
-    const id = values.id || Math.random().toString(36).substring(2, 9);
+  async create(values: SongMutation): Promise<SongRecord> {
+    const id = values.id || Math.random().toString(36).substring(2, 9).toString();
     const createdAt = new Date().toISOString();
-    const newContact = { id, createdAt, ...values };
-    fakeContacts.records[id] = newContact;
-    return newContact;
+    const metronome = { id, createdAt, ...values };
+    metronomeDatabase.records[id] = metronome;
+    return metronome;
   },
 
-  async set(id: string, values: ContactMutation): Promise<ContactRecord> {
-    const contact = await fakeContacts.get(id);
-    invariant(contact, `No contact found for ${id}`);
-    const updatedContact = { ...contact, ...values };
-    fakeContacts.records[id] = updatedContact;
-    return updatedContact;
+  async set(id: string, values: SongMutation): Promise<SongRecord> {
+    const contact = await metronomeDatabase.get(id);
+    invariant(contact, `No metronome found for ${id}`);
+    const updatedMetronome = { ...contact, ...values };
+    metronomeDatabase.records[id] = updatedMetronome;
+    return updatedMetronome;
   },
 
   destroy(id: string): null {
-    delete fakeContacts.records[id];
+    delete metronomeDatabase.records[id];
     return null;
   },
 };
 
-////////////////////////////////////////////////////////////////////////////////
-// Handful of helper functions to be called from route loaders and actions
-export async function getContacts(query?: string | null) {
+export async function getMetronomes(query?: string | null) {
   await new Promise((resolve) => setTimeout(resolve, 500));
-  let contacts = await fakeContacts.getAll();
+  let metronome = await metronomeDatabase.getAll();
   if (query) {
-    contacts = matchSorter(contacts, query, {
+    metronome = matchSorter(metronome, query, {
       keys: ["first", "last"],
     });
   }
-  return contacts.sort(sortBy("last", "createdAt"));
+  return metronome.sort(sortBy("last", "createdAt"));
 }
 
-export async function createEmptyContact() {
-  const contact = await fakeContacts.create({});
-  return contact;
+export async function createEmptyMetronome() {
+  const metronome = await metronomeDatabase.create({});
+  return metronome;
 }
 
-export async function getContact(id: string) {
-  return fakeContacts.get(id);
+export async function getMetronome(id: string) {
+  return metronomeDatabase.get(id);
 }
 
-export async function updateContact(id: string, updates: ContactMutation) {
-  const contact = await fakeContacts.get(id);
-  if (!contact) {
-    throw new Error(`No contact found for ${id}`);
+export async function updateMetronome(id: string, updates: SongMutation) {
+  const metronome = await metronomeDatabase.get(id);
+  if (!metronome) {
+    throw new Error(`No metronome found for ${id}`);
   }
-  await fakeContacts.set(id, { ...contact, ...updates });
-  return contact;
+  await metronomeDatabase.set(id, { ...metronome, ...updates });
+  return metronome;
 }
 
-export async function deleteContact(id: string) {
-  fakeContacts.destroy(id);
+export async function deleteMetronome(id: string) {
+  metronomeDatabase.destroy(id);
 }
 
-[
+const builtinMetronomes: Array<SongMutation> = [
   {
-    avatar:
-      "https://sessionize.com/image/124e-400o400o2-wHVdAuNaxi8KJrgtN3ZKci.jpg",
-    first: "Shruti",
-    last: "Kapoor",
-    twitter: "@shrutikapoor08",
+    name: 'Test Song',
+    favorite: false,
+    instrument: 'Piano',
+    bars: [
+      {
+        id: 0,
+        name: 'Allegro',
+        bpm: 120,
+        timeSignature: [4, 4],
+        subBeats: 1,
+        delay: 0,
+        numberOfBars: 2
+      },
+      {
+        id: 1,
+        name: 'Larghetto',
+        bpm: 60,
+        timeSignature: [4, 4],
+        subBeats: 4,
+        delay: 500,
+        numberOfBars: 2
+      },
+      {
+        id: 2,
+        name: 'Andantino',
+        bpm: 80,
+        timeSignature: [6, 8],
+        subBeats: 3,
+        delay: 0,
+        numberOfBars: 2
+      }
+    ]
+  }
+];
+
+builtinMetronomes.forEach(metronomeDatabase.create);
+
+const tempos = [
+  {
+      "name": "Larghissimo",
+      "bpm_min": 0,
+      "bpm_max": 24
   },
   {
-    avatar:
-      "https://sessionize.com/image/1940-400o400o2-Enh9dnYmrLYhJSTTPSw3MH.jpg",
-    first: "Glenn",
-    last: "Reyes",
-    twitter: "@glnnrys",
+      "name": "Grave",
+      "bpm_min": 25,
+      "bpm_max": 40
   },
   {
-    avatar:
-      "https://sessionize.com/image/9273-400o400o2-3tyrUE3HjsCHJLU5aUJCja.jpg",
-    first: "Ryan",
-    last: "Florence",
+      "name": "Lento",
+      "bpm_min": 40,
+      "bpm_max": 60
   },
   {
-    avatar:
-      "https://sessionize.com/image/d14d-400o400o2-pyB229HyFPCnUcZhHf3kWS.png",
-    first: "Oscar",
-    last: "Newman",
-    twitter: "@__oscarnewman",
+      "name": "Largo",
+      "bpm_min": 40,
+      "bpm_max": 60
   },
   {
-    avatar:
-      "https://sessionize.com/image/fd45-400o400o2-fw91uCdGU9hFP334dnyVCr.jpg",
-    first: "Michael",
-    last: "Jackson",
+      "name": "Larghetto",
+      "bpm_min": 60,
+      "bpm_max": 66
   },
   {
-    avatar:
-      "https://sessionize.com/image/b07e-400o400o2-KgNRF3S9sD5ZR4UsG7hG4g.jpg",
-    first: "Christopher",
-    last: "Chedeau",
-    twitter: "@Vjeux",
+      "name": "Adagio",
+      "bpm_min": 66,
+      "bpm_max": 76
   },
   {
-    avatar:
-      "https://sessionize.com/image/262f-400o400o2-UBPQueK3fayaCmsyUc1Ljf.jpg",
-    first: "Cameron",
-    last: "Matheson",
-    twitter: "@cmatheson",
+      "name": "Andante",
+      "bpm_min": 76,
+      "bpm_max": 108
   },
   {
-    avatar:
-      "https://sessionize.com/image/820b-400o400o2-Ja1KDrBAu5NzYTPLSC3GW8.jpg",
-    first: "Brooks",
-    last: "Lybrand",
-    twitter: "@BrooksLybrand",
+      "name": "Andantino",
+      "bpm_min": 80,
+      "bpm_max": 108
   },
   {
-    avatar:
-      "https://sessionize.com/image/df38-400o400o2-JwbChVUj6V7DwZMc9vJEHc.jpg",
-    first: "Alex",
-    last: "Anderson",
-    twitter: "@ralex1993",
+      "name": "Moderato",
+      "bpm_min": 108,
+      "bpm_max": 120
   },
   {
-    avatar:
-      "https://sessionize.com/image/5578-400o400o2-BMT43t5kd2U1XstaNnM6Ax.jpg",
-    first: "Kent C.",
-    last: "Dodds",
-    twitter: "@kentcdodds",
+      "name": "Allegretto",
+      "bpm_min": 112,
+      "bpm_max": 120
   },
   {
-    avatar:
-      "https://sessionize.com/image/c9d5-400o400o2-Sri5qnQmscaJXVB8m3VBgf.jpg",
-    first: "Nevi",
-    last: "Shah",
-    twitter: "@nevikashah",
+      "name": "Allegro",
+      "bpm_min": 120,
+      "bpm_max": 156
   },
   {
-    avatar:
-      "https://sessionize.com/image/2694-400o400o2-MYYTsnszbLKTzyqJV17w2q.png",
-    first: "Andrew",
-    last: "Petersen",
+      "name": "Vivace",
+      "bpm_min": 156,
+      "bpm_max": 176
   },
   {
-    avatar:
-      "https://sessionize.com/image/907a-400o400o2-9TM2CCmvrw6ttmJiTw4Lz8.jpg",
-    first: "Scott",
-    last: "Smerchek",
-    twitter: "@smerchek",
+      "name": "Presto",
+      "bpm_min": 168,
+      "bpm_max": 200
   },
   {
-    avatar:
-      "https://sessionize.com/image/08be-400o400o2-WtYGFFR1ZUJHL9tKyVBNPV.jpg",
-    first: "Giovanni",
-    last: "Benussi",
-    twitter: "@giovannibenussi",
-  },
-  {
-    avatar:
-      "https://sessionize.com/image/f814-400o400o2-n2ua5nM9qwZA2hiGdr1T7N.jpg",
-    first: "Igor",
-    last: "Minar",
-    twitter: "@IgorMinar",
-  },
-  {
-    avatar:
-      "https://sessionize.com/image/fb82-400o400o2-LbvwhTVMrYLDdN3z4iEFMp.jpeg",
-    first: "Brandon",
-    last: "Kish",
-  },
-  {
-    avatar:
-      "https://sessionize.com/image/fcda-400o400o2-XiYRtKK5Dvng5AeyC8PiUA.png",
-    first: "Arisa",
-    last: "Fukuzaki",
-    twitter: "@arisa_dev",
-  },
-  {
-    avatar:
-      "https://sessionize.com/image/c8c3-400o400o2-PR5UsgApAVEADZRixV4H8e.jpeg",
-    first: "Alexandra",
-    last: "Spalato",
-    twitter: "@alexadark",
-  },
-  {
-    avatar:
-      "https://sessionize.com/image/7594-400o400o2-hWtdCjbdFdLgE2vEXBJtyo.jpg",
-    first: "Cat",
-    last: "Johnson",
-  },
-  {
-    avatar:
-      "https://sessionize.com/image/5636-400o400o2-TWgi8vELMFoB3hB9uPw62d.jpg",
-    first: "Ashley",
-    last: "Narcisse",
-    twitter: "@_darkfadr",
-  },
-  {
-    avatar:
-      "https://sessionize.com/image/6aeb-400o400o2-Q5tAiuzKGgzSje9ZsK3Yu5.JPG",
-    first: "Edmund",
-    last: "Hung",
-    twitter: "@_edmundhung",
-  },
-  {
-    avatar:
-      "https://sessionize.com/image/30f1-400o400o2-wJBdJ6sFayjKmJycYKoHSe.jpg",
-    first: "Clifford",
-    last: "Fajardo",
-    twitter: "@cliffordfajard0",
-  },
-  {
-    avatar:
-      "https://sessionize.com/image/6faa-400o400o2-amseBRDkdg7wSK5tjsFDiG.jpg",
-    first: "Erick",
-    last: "Tamayo",
-    twitter: "@ericktamayo",
-  },
-  {
-    avatar:
-      "https://sessionize.com/image/feba-400o400o2-R4GE7eqegJNFf3cQ567obs.jpg",
-    first: "Paul",
-    last: "Bratslavsky",
-    twitter: "@codingthirty",
-  },
-  {
-    avatar:
-      "https://sessionize.com/image/c315-400o400o2-spjM5A6VVfVNnQsuwvX3DY.jpg",
-    first: "Pedro",
-    last: "Cattori",
-    twitter: "@pcattori",
-  },
-  {
-    avatar:
-      "https://sessionize.com/image/eec1-400o400o2-HkvWKLFqecmFxLwqR9KMRw.jpg",
-    first: "Andre",
-    last: "Landgraf",
-    twitter: "@AndreLandgraf94",
-  },
-  {
-    avatar:
-      "https://sessionize.com/image/c73a-400o400o2-4MTaTq6ftC15hqwtqUJmTC.jpg",
-    first: "Monica",
-    last: "Powell",
-    twitter: "@indigitalcolor",
-  },
-  {
-    avatar:
-      "https://sessionize.com/image/cef7-400o400o2-KBZUydbjfkfGACQmjbHEvX.jpeg",
-    first: "Brian",
-    last: "Lee",
-    twitter: "@brian_dlee",
-  },
-  {
-    avatar:
-      "https://sessionize.com/image/f83b-400o400o2-Pyw3chmeHMxGsNoj3nQmWU.jpg",
-    first: "Sean",
-    last: "McQuaid",
-    twitter: "@SeanMcQuaidCode",
-  },
-  {
-    avatar:
-      "https://sessionize.com/image/a9fc-400o400o2-JHBnWZRoxp7QX74Hdac7AZ.jpg",
-    first: "Shane",
-    last: "Walker",
-    twitter: "@swalker326",
-  },
-  {
-    avatar:
-      "https://sessionize.com/image/6644-400o400o2-aHnGHb5Pdu3D32MbfrnQbj.jpg",
-    first: "Jon",
-    last: "Jensen",
-    twitter: "@jenseng",
-  },
-].forEach((contact) => {
-  fakeContacts.create({
-    ...contact,
-    id: `${contact.first.toLowerCase()}-${contact.last.toLocaleLowerCase()}`,
-  });
-});
+      "name": "Prestissimo",
+      "bpm_min": 200,
+      "bpm_max": null
+  }
+];

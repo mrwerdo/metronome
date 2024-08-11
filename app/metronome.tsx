@@ -19,7 +19,7 @@ class MetronomeState {
 // #3D518C
 // #1B2CC1
 
-export const Metronome = () => {
+export const MetronomeCounter = () => {
   const [isLoaded, setLoaded] = useState(false);
   const sampler = useRef<Sampler | null>(null);
   const [numberOfBeats, setNumberOfBeats] = useState(4);

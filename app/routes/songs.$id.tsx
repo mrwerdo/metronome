@@ -1,19 +1,17 @@
 import { json } from "@remix-run/node";
-import { Form, useLoaderData, useFetcher } from "@remix-run/react";
+import { Form, useLoaderData, useFetcher, Outlet } from "@remix-run/react";
 import type { FunctionComponent } from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import invariant from "tiny-invariant";
-
-
-import { getContact, updateContact } from "../data";
-
-import type { ContactRecord } from "../data";
+import { getMetronome, updateMetronome } from "../data";
+import type { BarMutation, SongRecord } from "../data";
+import { MetronomeCounter } from "~/metronome";
 
 export const loader = async ({
   params,
 }: LoaderFunctionArgs) => {
-  invariant(params.contactId, "Missing contactId param");
-  const contact = await getContact(params.contactId);
+  invariant(params.id, "Missing id param");
+  const contact = await getMetronome(params.id);
   if (!contact) {
     throw new Response("Not Found", { status: 404 });
   }
@@ -24,49 +22,31 @@ export const action = async ({
   params,
   request,
 }: ActionFunctionArgs) => {
-  invariant(params.contactId, "Missing contactId param");
+  invariant(params.id, "Missing id param");
   const formData = await request.formData();
-  return updateContact(params.contactId, {
+  return updateMetronome(params.id, {
     favorite: formData.get("favorite") === "true",
   });
 };
 
-export default function Contact() {
-  const { contact } = useLoaderData<typeof loader>();
+function Bar({ bar }: { bar: BarMutation }) {
+  return <div>
+    {bar.name}
+  </div>
+}
+
+export default function Songs() {
+  const { contact: song } = useLoaderData<typeof loader>();
 
   return (
     <div id="contact">
       <div>
-        <img
-          alt={`${contact.first} ${contact.last} avatar`}
-          key={contact.avatar}
-          src={contact.avatar}
-        />
-      </div>
-
-      <div>
         <h1>
-          {contact.first || contact.last ? (
-            <>
-              {contact.first} {contact.last}
-            </>
-          ) : (
-            <i>No Name</i>
-          )}{" "}
-          <Favorite contact={contact} />
+          {song.name ? song.name : (<i>No Name</i>)}
+          <Favorite song={song} />
         </h1>
 
-        {contact.twitter ? (
-          <p>
-            <a
-              href={`https://twitter.com/${contact.twitter}`}
-            >
-              {contact.twitter}
-            </a>
-          </p>
-        ) : null}
-
-        {contact.notes ? <p>{contact.notes}</p> : null}
+        <p>{song.instrument}</p>
 
         <div>
           <Form action="edit">
@@ -88,18 +68,26 @@ export default function Contact() {
             <button type="submit">Delete</button>
           </Form>
         </div>
+        <div style={{display: 'flex'}}>
+          {
+            !song.bars ? null : song.bars.map((value, index) => {
+              return <Bar key={index} bar={value}></Bar>
+            })
+          }
+        </div>
       </div>
+      <MetronomeCounter />
     </div>
   );
 }
 
 const Favorite: FunctionComponent<{
-  contact: Pick<ContactRecord, "favorite">;
-}> = ({ contact }) => {
+  song: Pick<SongRecord, "favorite">;
+}> = ({ song }) => {
   const fetcher = useFetcher();
   const favorite = fetcher.formData
     ? fetcher.formData.get("favorite") === "true"
-    : contact.favorite;
+    : song.favorite;
 
   return (
     <fetcher.Form method="post">

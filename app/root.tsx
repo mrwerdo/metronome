@@ -19,13 +19,13 @@ import {
 } from "@remix-run/react";
 
 import appStylesHref from "./app.css?url";
-import { createEmptyContact, getContacts } from "./data";
+import { createEmptyMetronome, getMetronomes } from "./data";
 import { useEffect } from "react";
-import { Metronome } from "./metronome";
+import { MetronomeCounter } from "./metronome";
 
 export const action = async () => {
-  const contact = await createEmptyContact();
-  return redirect(`/contacts/${contact.id}/edit`);
+  const contact = await createEmptyMetronome();
+  return redirect(`/songs/${contact.id}/edit`);
 };
 
 export const links: LinksFunction = () => [
@@ -37,12 +37,12 @@ export const loader = async ({
 }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const q = url.searchParams.get("q");
-  const contacts = await getContacts(q);
-  return json({ contacts, q });
+  const metronome = await getMetronomes(q);
+  return json({ metronome, q });
 };
 
 export default function App() {
-  const { contacts, q } = useLoaderData<typeof loader>();
+  const { metronome: songs, q } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const submit = useSubmit();
   const searching =
@@ -100,10 +100,10 @@ export default function App() {
             </Form>
           </div>
           <nav>
-            {contacts.length ? (
+            {songs.length ? (
               <ul>
-                {contacts.map((contact) => (
-                  <li key={contact.id}>
+                {songs.map((song) => (
+                  <li key={song.id}>
                     <NavLink
                       className={({ isActive, isPending }) =>
                         isActive
@@ -112,15 +112,9 @@ export default function App() {
                             ? "pending"
                             : ""
                       }
-                      to={`contacts/${contact.id}`}>
-                      {contact.first || contact.last ? (
-                        <>
-                          {contact.first} {contact.last}
-                        </>
-                      ) : (
-                        <i>No Name</i>
-                      )}{" "}
-                      {contact.favorite ? (
+                      to={`songs/${song.id}`}>
+                      {song.name ? song.name : (<i>No Name</i>)}
+                      {song.favorite ? (
                         <span>★</span>
                       ) : null}
                     </NavLink>
@@ -129,7 +123,7 @@ export default function App() {
               </ul>
             ) : (
               <p>
-                <i>No contacts</i>
+                <i>No songs</i>
               </p>
             )}
           </nav>
@@ -144,7 +138,6 @@ export default function App() {
           id="detail"
         >
           <Outlet />
-          <Metronome></Metronome>
         </div>
 
         <ScrollRestoration />

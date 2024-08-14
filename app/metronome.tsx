@@ -1,52 +1,45 @@
-import { useState, useRef, useEffect, createRef, KeyboardEvent } from "react";
+import { useState, useRef, useEffect, createRef, KeyboardEvent, useLayoutEffect } from "react";
 import { Sampler, Loop, getTransport } from "tone";
 import studio_01 from "../tones/studio-01.aif?url";
 import studio_02 from "../tones/studio-02.aif?url";
 import coffee_shop from "../tones/coffee-shop.aif?url";
+import { SongRecord } from "./data";
+import { TransportClass } from "tone/build/esm/core/clock/Transport";
 
 class MetronomeState {
-  counter: number;
+  counter: number
+  song: SongRecord
+  transport: TransportClass
+  loop: Loop
+  sampler: Sampler
+  numberOfBeats: number
+  numberOfSubBeats: number
+  setCounter: React.Dispatch<React.SetStateAction<number>>
+  setLoaded: React.Dispatch<React.SetStateAction<boolean>>
 
-  constructor() {
-    this.counter = 0;
-  }
-}
+  constructor(song: SongRecord, numberOfBeats: number, numberOfSubBeats: number, setCounter: React.Dispatch<React.SetStateAction<number>>, setLoaded: React.Dispatch<React.SetStateAction<boolean>>) {
+    this.counter = 0
+    this.song = song
+    this.numberOfBeats = numberOfBeats;
+    this.numberOfSubBeats = numberOfSubBeats;
+    this.transport = getTransport();
+    this.setCounter = setCounter
+    this.setLoaded = setLoaded
+    this.loop = new Loop((time) => {
+      console.log(`state.current.counter += 1`)
+      this.counter += 1;
+      if ((this.counter % (this.numberOfBeats * this.numberOfSubBeats)) === 0) {
+        this.sampler.triggerAttack("A1", time);
+      } else if ((this.counter % this.numberOfSubBeats) === 0) {
+        this.sampler.triggerAttack("A2", time);
+      } else {
+        this.sampler.triggerAttack("B1", time);
+      }
+      console.log(`setCounter(${this.counter % (this.numberOfBeats * this.numberOfSubBeats)})`)
+      this.setCounter(this.counter);
+    }, `4n`);
 
-// https://coolors.co/091540-7692ff-abd2fa-3d518c-1b2cc1
-// #091540
-// #7692FF
-// #ABD2FA
-// #3D518C
-// #1B2CC1
-
-export const MetronomeCounter = () => {
-  const [isLoaded, setLoaded] = useState(false);
-  const sampler = useRef<Sampler | null>(null);
-  const [numberOfBeats, setNumberOfBeats] = useState(4);
-  const [numberOfSubBeats, setNumberOfSubBeats] = useState(3);
-  const transport = getTransport();
-  const loop = useRef<Loop | null>(null);
-  const state = useRef<MetronomeState>(new MetronomeState());
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [counter, setCounter] = useState(0);
-  const [beatsPerMinute, setBeatsPerMinute] = useState(40);
-  const div = createRef<HTMLDivElement>();
-
-  if (typeof(transport.once) === "function") {
-    transport.once("start", () => {
-      setIsPlaying(true);
-    });
-    transport.once("stop", () => {
-      setIsPlaying(false);
-    });
-  }
-
-  useEffect(() => {
-    div.current?.focus();
-  }, []);
-
-  useEffect(() => {
-    sampler.current = new Sampler(
+    this.sampler = new Sampler(
       {
         "A1": studio_01, 
         "A2": studio_02,
@@ -58,49 +51,97 @@ export const MetronomeCounter = () => {
         }
       }
     ).toDestination();
-  }, []);
+  }
+
+  setNumberOfBeatsAndSubBeats(beats: number, subbeats: number) {
+    this.numberOfBeats = beats
+    this.numberOfSubBeats = subbeats
+    const previous = this.loop;
+    previous?.stop(0);
+    this.loop = new Loop((time) => {
+      console.log(`state.current.counter += 1`)
+      this.counter += 1;
+      if ((this.counter % (this.numberOfBeats * this.numberOfSubBeats)) === 0) {
+        this.sampler.triggerAttack("A1", time);
+      } else if ((this.counter % this.numberOfSubBeats) === 0) {
+        this.sampler.triggerAttack("A2", time);
+      } else {
+        this.sampler.triggerAttack("B1", time);
+      }
+      console.log(`setCounter(${this.counter % (this.numberOfBeats * this.numberOfSubBeats)})`)
+      this.setCounter(this.counter);
+    }, `4n`);
+
+    if (this.transport.state === "started") {
+      this.loop.start(0);
+      console.log(`state.current.counter = 0`)
+      this.counter = 0;
+      console.log(`setCounter(${this.counter % (this.numberOfBeats * this.numberOfSubBeats)})`)
+      this.setCounter(this.counter);
+    }
+  }
+
+  toggleIsPlaying() {
+    if (this.transport.state === "started") {
+      this.transport.stop();
+      this.loop.stop();
+    } else {
+      this.transport.start();
+      this.loop.start(0);
+      console.log(`state.current.counter = numberOfBeats * numberOfSubBeats - 1`)
+      this.counter = -1;
+    }
+  }
+}
+
+// https://coolors.co/091540-7692ff-abd2fa-3d518c-1b2cc1
+// #091540
+// #7692FF
+// #ABD2FA
+// #3D518C
+// #1B2CC1
+
+export const MetronomeCounter = ({ song }: { song: SongRecord }) => {
+  const [isLoaded, setLoaded] = useState(false);
+  const [numberOfBeats, setNumberOfBeats] = useState(4);
+  const [numberOfSubBeats, setNumberOfSubBeats] = useState(3);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [counter, setCounter] = useState(0);
+  const state = useRef<MetronomeState>(new MetronomeState(song, numberOfBeats, numberOfSubBeats, setCounter, setLoaded));
+  const [beatsPerMinute, setBeatsPerMinute] = useState(40);
+  const div = createRef<HTMLDivElement>();
+
+  if (typeof(state.current.transport.once) === "function") {
+    state.current.transport.once("start", () => {
+      setIsPlaying(true);
+    });
+    state.current.transport.once("stop", () => {
+      setIsPlaying(false);
+    });
+  }
 
   useEffect(() => {
-    const previous = loop.current;
-    previous?.stop(0);
-    loop.current = new Loop((time) => {
-      console.log(`state.current.counter += 1`)
-      state.current.counter += 1;
-      if ((state.current.counter % (numberOfBeats * numberOfSubBeats)) === 0) {
-        sampler.current!.triggerAttack("A1", time);
-      } else if ((state.current.counter % numberOfSubBeats) === 0) {
-        sampler.current!.triggerAttack("A2", time);
-      } else {
-        sampler.current!.triggerAttack("B1", time);
-      }
-      console.log(`setCounter(${state.current.counter % (numberOfBeats * numberOfSubBeats)})`)
-      setCounter(state.current.counter);
-    }, `4n`);
-    if (transport.state === "started") {
-      loop.current.start(0);
-      console.log(`state.current.counter = 0`)
-      state.current.counter = 0;
-      console.log(`setCounter(${state.current.counter % (numberOfBeats * numberOfSubBeats)})`)
-      setCounter(state.current.counter);
-    }
+    div.current?.focus();
+  }, []);
+  
+  useEffect(() => {
+    state.current.song = song;
+    state.current.setLoaded = setLoaded;
+    state.current.setCounter = setCounter;
+  }, [song, setLoaded, setCounter]);
+
+  useEffect(() => {
+    state.current.setNumberOfBeatsAndSubBeats(numberOfBeats, numberOfSubBeats)
   }, [numberOfBeats, numberOfSubBeats]);
 
   useEffect(() => {
     if (beatsPerMinute) {
-      transport.bpm.value = beatsPerMinute * numberOfSubBeats;
+      state.current.transport.bpm.value = beatsPerMinute * numberOfSubBeats;
     }
   }, [beatsPerMinute, numberOfSubBeats])
 
   const handleClick = () => {
-    if (transport.state === "started") {
-      transport.stop();
-      loop.current!.stop();
-    } else {
-      transport.start();
-      loop.current!.start(0);
-      console.log(`state.current.counter = numberOfBeats * numberOfSubBeats - 1`)
-      state.current.counter = -1;
-    }
+    state.current.toggleIsPlaying();
   };
 
   const keypress = (event: KeyboardEvent) => {

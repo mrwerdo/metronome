@@ -1,6 +1,7 @@
-# Welcome to Remix!
+# Welcome to Remix + Cloudflare!
 
 - [Remix Docs](https://remix.run/docs)
+- [Remix Cloudflare docs](https://remix.run/guides/vite#cloudflare)
 
 ## Development
 
@@ -12,6 +13,23 @@ npm run dev
 
 This starts your app in development mode, rebuilding assets on file changes.
 
+To run Wrangler:
+
+```sh
+npm run build
+npm run start
+```
+
+## Typegen
+
+Generate types for your Cloudflare bindings in `wrangler.toml`:
+
+```sh
+npm run typegen
+```
+
+You will need to rerun typegen whenever you make changes to `wrangler.toml`.
+
 ## Deployment
 
 First, build your app for production:
@@ -20,19 +38,12 @@ First, build your app for production:
 npm run build
 ```
 
-Then run the app in production mode:
+Then, deploy your app to Cloudflare Pages:
 
 ```sh
-npm start
+npm run deploy
 ```
 
-Now you'll need to pick a host to deploy it to.
+## Styling
 
-### DIY
-
-If you're familiar with deploying node applications, the built-in Remix app server is production-ready.
-
-Make sure to deploy the output of `remix build`
-
-- `build/server`
-- `build/client`
+This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever css framework you prefer. See the [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information.

@@ -1,5 +1,6 @@
 {
   "include": [
+    "worker-configuration.d.ts",
     "**/*.ts",
     "**/*.tsx",
     "**/.server/**/*.ts",
@@ -9,10 +10,15 @@
   ],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
-    "types": ["@remix-run/node", "vite/client"],
+    "types": [
+        "@remix-run/cloudflare",
+        "@cloudflare/workers-types",
+        "vite/client"
+    ],
     "isolatedModules": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
+    "module": "ESNext",
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "target": "ES2022",

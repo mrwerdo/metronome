@@ -1,12 +1,11 @@
 import { json } from "@remix-run/node";
-import { Form, useLoaderData, useFetcher, Outlet } from "@remix-run/react";
-import { Suspense, type FunctionComponent } from "react";
+import { Form, useLoaderData, useFetcher } from "@remix-run/react";
+import { type FunctionComponent } from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import invariant from "tiny-invariant";
 import { getMetronome, updateMetronome } from "../data";
 import type { BarMutation, SongRecord } from "../data";
 import { MetronomeCounter } from "~/metronome";
-// import { ClientOnly} from 'remix-utils';
 
 export const loader = async ({
   params,
@@ -69,7 +68,7 @@ export default function Songs() {
             <button type="submit">Delete</button>
           </Form>
         </div>
-        <div style={{display: 'flex'}}>
+        <div style={{ display: 'flex' }}>
           {
             !song.bars ? null : song.bars.map((value, index) => {
               return <Bar key={index} bar={value}></Bar>
@@ -77,9 +76,7 @@ export default function Songs() {
           }
         </div>
       </div>
-      <Suspense fallback={null}>
-        <MetronomeCounter song={song} />
-      </Suspense>
+      <MetronomeCounter song={song} />
     </div>
   );
 }

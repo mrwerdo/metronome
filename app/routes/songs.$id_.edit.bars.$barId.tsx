@@ -1,6 +1,6 @@
 import type {
-    ActionFunctionArgs,
-    LoaderFunctionArgs,
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
 } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, useLoaderData, useNavigate } from "@remix-run/react";
@@ -15,14 +15,15 @@ export const action = async ({
   invariant(params.barId, "Missing barId param");
   const formData = await request.formData();
   const action = formData.get('action');
-  const updates = Object.fromEntries(formData);
-  if ('id' in updates) {
-    delete updates['id']
-  }
   const bar: BarMutation = {
     id: parseInt(params.barId),
-    ...updates
+    bpm: parseInt(formData.get('bpm')?.toString() ?? '120'),
+    delay: parseInt(formData.get('delay')?.toString() ?? '0'),
+    name: formData.get('name')?.toString() ?? 'Default',
+    numberOfBars: parseInt(formData.get('numberOfBars')?.toString() ?? '1'),
+    subBeats: parseInt(formData.get('subBeats')?.toString() ?? '1')
   }
+  bar.timeSignature = [parseInt(formData.get('timeSignatureNumerator')?.toString() ?? '4'), 4]
   const song = await getMetronome(params.id);
   if (song === null) {
     throw new Response("Song Not Found", { status: 404 })
@@ -48,7 +49,7 @@ export const action = async ({
     song.bars.every((value, index) => value.id = index)
     return null;
   } else if (action === 'add-after') {
-    song.bars.splice(index+1, 0, bar);
+    song.bars.splice(index + 1, 0, bar);
     song.bars.forEach((value, index) => value.id = index)
     return null;
   }
@@ -105,14 +106,14 @@ function BarForm({ bar }: { bar: BarMutation }) {
           <label>
             Time Signature:
             <input
-            type="number"
-            name="timeSignatureNumerator"
-            defaultValue={bar.timeSignature ? bar.timeSignature[0] : 4}
+              type="number"
+              name="timeSignatureNumerator"
+              defaultValue={bar.timeSignature ? bar.timeSignature[0] : 4}
             />
             <input
-            type="number"
-            name="timeSignatureDenominator"
-            defaultValue={bar.timeSignature ? bar.timeSignature[1] : 4}
+              type="number"
+              name="timeSignatureDenominator"
+              defaultValue={bar.timeSignature ? bar.timeSignature[1] : 4}
             />
           </label>
         </div>

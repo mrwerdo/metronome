@@ -16,19 +16,26 @@ export type BarMutation = {
 export type BarRecord = BarMutation & {
   id: number,
   createdAt: string;
+  name: string
+  bpm: number
+  timeSignature: [number, number]
+  subBeats: number
+  delay: number
+  numberOfBars: number
 }
 
 export type SongMutation = {
-    id?: string 
-    name?: string
-    favorite?: boolean
-    instrument?: string
-    bars?: Array<BarMutation>
+  id?: string
+  name?: string
+  favorite?: boolean
+  instrument?: string
+  bars?: Array<BarMutation>
 }
 
 export type SongRecord = SongMutation & {
   id: string
   createdAt: string
+  // bars: Array<BarRecord>
 }
 
 const metronomeDatabase = {
@@ -140,73 +147,73 @@ builtinMetronomes.forEach(metronomeDatabase.create);
 
 const tempos = [
   {
-      "name": "Larghissimo",
-      "bpm_min": 0,
-      "bpm_max": 24
+    "name": "Larghissimo",
+    "bpm_min": 0,
+    "bpm_max": 24
   },
   {
-      "name": "Grave",
-      "bpm_min": 25,
-      "bpm_max": 40
+    "name": "Grave",
+    "bpm_min": 25,
+    "bpm_max": 40
   },
   {
-      "name": "Lento",
-      "bpm_min": 40,
-      "bpm_max": 60
+    "name": "Lento",
+    "bpm_min": 40,
+    "bpm_max": 60
   },
   {
-      "name": "Largo",
-      "bpm_min": 40,
-      "bpm_max": 60
+    "name": "Largo",
+    "bpm_min": 40,
+    "bpm_max": 60
   },
   {
-      "name": "Larghetto",
-      "bpm_min": 60,
-      "bpm_max": 66
+    "name": "Larghetto",
+    "bpm_min": 60,
+    "bpm_max": 66
   },
   {
-      "name": "Adagio",
-      "bpm_min": 66,
-      "bpm_max": 76
+    "name": "Adagio",
+    "bpm_min": 66,
+    "bpm_max": 76
   },
   {
-      "name": "Andante",
-      "bpm_min": 76,
-      "bpm_max": 108
+    "name": "Andante",
+    "bpm_min": 76,
+    "bpm_max": 108
   },
   {
-      "name": "Andantino",
-      "bpm_min": 80,
-      "bpm_max": 108
+    "name": "Andantino",
+    "bpm_min": 80,
+    "bpm_max": 108
   },
   {
-      "name": "Moderato",
-      "bpm_min": 108,
-      "bpm_max": 120
+    "name": "Moderato",
+    "bpm_min": 108,
+    "bpm_max": 120
   },
   {
-      "name": "Allegretto",
-      "bpm_min": 112,
-      "bpm_max": 120
+    "name": "Allegretto",
+    "bpm_min": 112,
+    "bpm_max": 120
   },
   {
-      "name": "Allegro",
-      "bpm_min": 120,
-      "bpm_max": 156
+    "name": "Allegro",
+    "bpm_min": 120,
+    "bpm_max": 156
   },
   {
-      "name": "Vivace",
-      "bpm_min": 156,
-      "bpm_max": 176
+    "name": "Vivace",
+    "bpm_min": 156,
+    "bpm_max": 176
   },
   {
-      "name": "Presto",
-      "bpm_min": 168,
-      "bpm_max": 200
+    "name": "Presto",
+    "bpm_min": 168,
+    "bpm_max": 200
   },
   {
-      "name": "Prestissimo",
-      "bpm_min": 200,
-      "bpm_max": null
+    "name": "Prestissimo",
+    "bpm_min": 200,
+    "bpm_max": null
   }
 ];

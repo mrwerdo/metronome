@@ -199,7 +199,17 @@ export async function getMetronome(db: D1Database, id: string): Promise<SongType
 }
 
 export async function updateMetronome(db: D1Database, id: string, updates: SongMutation) {
+  const kdb = createKyselyDatabase(db)
 
+  const record = {
+    ...updates,
+    favorite: updates.favorite ? 1 : 0
+  }
+
+  const result = await kdb.updateTable('Songs').set(
+    record
+  ).where('Songs.id', '=', id).returningAll().executeTakeFirstOrThrow()
+  return result
 }
 
 export async function addBar(db: D1Database, id: string, bar: BarType) {

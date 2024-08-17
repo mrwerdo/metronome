@@ -55,10 +55,8 @@ export const action = async ({
     song.bars.forEach((value, index) => value.id = index)
   }
 
-  console.log('edit bars action')
-  console.log(song.bars);
   await setBarsForSong(db, song.id, song.bars);
-  return redirect(`/songs/${params.id}/edit`)
+  return null;
 };
 
 export const loader = async ({

@@ -9,7 +9,6 @@ export const action = async ({
     params,
     context,
 }: ActionFunctionArgs) => {
-    console.log(params);
     invariant(params.id, "Missing contactId param");
     const db = context.cloudflare.env.DB
     await deleteMetronome(db, params.id);

@@ -1,7 +1,4 @@
-# Welcome to Remix + Cloudflare!
-
-- [Remix Docs](https://remix.run/docs)
-- [Remix Cloudflare docs](https://remix.run/guides/vite#cloudflare)
+# Welcome to Metronome by 10x10.dev
 
 ## Development
 
@@ -22,7 +19,7 @@ npm run start
 
 This command loads the sql schema into the local database:
 
-```
+```sh
 npm exec wrangler d1 execute -- metronome --file sql/schema.sql
 # or
 npm run seed
@@ -30,16 +27,15 @@ npm run seed
 
 
 This command generates types from the database schema:
-```
-DATABASE_URL=$(find .wrangler -type f -name '*.sqlite')
+```sh
 DATABASE_URL=$(find .wrangler -type f -name '*.sqlite') npm exec kysely-codegen -- --out-file app/db.d.ts
 # or
 npm run dbtypegen
 ```
-
+If there are multiple files which end with `.sqlite` then this command may not give the expecetd output.
 
 This one shows tables from the database:
-```
+```sh
 % npm exec wrangler d1 -- execute metronome --command "SELECT S.id AS songId, 
        S.name AS songName,
        S.favorite,
@@ -69,10 +65,9 @@ You will need to rerun typegen whenever you make changes to `wrangler.toml`.
 
 ## Deployment
 
-First, build your app for production:
-
-```sh
-npm run build
+First, delete the database and re-create it:
+```
+npm exec wrangler d1 execute -- metronome --remote --file sql/schema.sql
 ```
 
 Then, deploy your app to Cloudflare Pages:
@@ -81,14 +76,13 @@ Then, deploy your app to Cloudflare Pages:
 npm run deploy
 ```
 
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever css framework you prefer. See the [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information.
-
-
-# Key Dependencies
+## Key Dependencies
 
 - [kysely](https://kysely.dev/docs/intro)
 - [Cloudflare Workers](https://developers.cloudflare.com/workers/)
 - [Cloudflare Pages](https://developers.cloudflare.com/pages/)
 - [Cloudflare D1](https://developers.cloudflare.com/d1/)
+- [Remix Docs](https://remix.run/docs)
+- [Remix Cloudflare docs](https://remix.run/guides/vite#cloudflare)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Vite](https://vitejs.dev/guide/features.html#css)

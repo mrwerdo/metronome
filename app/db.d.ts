@@ -12,7 +12,7 @@ export interface _CfKV {
 export interface Bars {
   bpm: number;
   delay: number;
-  id: Generated<number>;
+  id: number;
   name: string;
   numberOfBars: number;
   songId: string;

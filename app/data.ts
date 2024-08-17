@@ -155,8 +155,6 @@ function generateGUID(): string {
 
 export async function createEmptyMetronome(db: D1Database) {
   const newGuid = generateGUID();
-  console.log('createEmptyMetronome')
-  console.log(newGuid);
 
   const kdb = createKyselyDatabase(db)
   const query = await kdb.insertInto('Songs').values(
@@ -193,8 +191,6 @@ export async function getMetronome(db: D1Database, id: string): Promise<SongType
     ).as('bars')
   ]).executeTakeFirstOrThrow()
 
-  console.log(query)
-
   // No matter what library/system I use, there is some tiny stupidity like this!
   // @ts-ignore
   query.favorite = query.favorite !== 0 ? true : false
@@ -219,14 +215,13 @@ export async function addBar(db: D1Database, id: string, bar: BarType) {
 export async function setBarsForSong(db: D1Database, songId: string, bars: Array<BarType>) {
   const kdb = createKyselyDatabase(db);
   await kdb.deleteFrom('Bars').where('Bars.songId', '=', songId).execute()
-  await kdb.insertInto('Bars').values(bars.map(value => { return { ...value, id: undefined } })).execute()
+  await kdb.insertInto('Bars').values(bars.map((value, index) => { return { ...value, id: index } })).execute()
 }
 
 
 export async function deleteMetronome(db: D1Database, id: string) {
   const kdb = createKyselyDatabase(db);
   const result = await kdb.deleteFrom('Songs').where('Songs.id', '=', id).execute();
-  console.log(`deleteMetronome: ${result}`)
 }
 
 const tempos = [

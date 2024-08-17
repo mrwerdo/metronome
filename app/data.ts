@@ -7,7 +7,7 @@ export type BarMutation = {
   id?: number
   name?: string
   bpm?: number
-  timeSignature?: [number, number]
+  timeSignature?: number
   subBeats?: number
   delay?: number
   numberOfBars?: number
@@ -18,7 +18,7 @@ export type BarRecord = BarMutation & {
   createdAt: string;
   name: string
   bpm: number
-  timeSignature: [number, number]
+  timeSignature: number
   subBeats: number
   delay: number
   numberOfBars: number
@@ -36,6 +36,43 @@ export type SongRecord = SongMutation & {
   id: string
   createdAt: string
   // bars: Array<BarRecord>
+}
+
+export type BarType = {
+  id: number,
+  songId: string
+  name: string
+  bpm: number
+  timeSignature: number
+  subBeats: number
+  delay: number
+  numberOfBars: number
+}
+
+export type SongType = {
+  id: string
+  name: string
+  favorite: boolean
+  instrument: string
+  createdAt: string
+  bars: Array<BarType>
+}
+
+import {
+  Kysely,
+  ParseJSONResultsPlugin,
+  ValueNode,
+} from 'kysely'
+
+import { DB as Database, Songs } from './db.d'
+import { jsonArrayFrom } from "kysely/helpers/sqlite";
+import { D1Dialect } from "kysely-d1";
+
+function createKyselyDatabase(db: D1Database): Kysely<Database> {
+  return new Kysely<Database>({
+    dialect: new D1Dialect({ database: db }),
+    plugins: [new ParseJSONResultsPlugin()]
+  })
 }
 
 const metronomeDatabase = {
@@ -73,77 +110,124 @@ const metronomeDatabase = {
   },
 };
 
-export async function getMetronomes(query?: string | null) {
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  let metronome = await metronomeDatabase.getAll();
-  if (query) {
-    metronome = matchSorter(metronome, query, {
-      keys: ["first", "last"],
-    });
+export async function getMetronomes(db: D1Database, query?: string | null) {
+  const kdb = createKyselyDatabase(db);
+  const result = await kdb.selectFrom('Songs').select((eb) => [
+    'Songs.id',
+    'Songs.name',
+    'Songs.createdAt',
+    'Songs.favorite',
+    'Songs.instrument',
+    jsonArrayFrom(
+      eb.selectFrom('Bars').select(
+        [
+          'Bars.id',
+          'Bars.bpm',
+          'Bars.delay',
+          'Bars.name',
+          'Bars.numberOfBars',
+          'Bars.songId',
+          'Bars.subBeats',
+          'Bars.timeSignature',
+      ]
+      ).whereRef('Songs.id', '=', 'Bars.songId').orderBy('Bars.id')
+    ).as('bars')
+  ]).execute()
+
+  if (!query) {
+    return result.sort(sortBy("last", "createdAt"));
   }
-  return metronome.sort(sortBy("last", "createdAt"));
+
+  return matchSorter(result, query, {
+    keys: ["first", "last"],
+  })
+  .sort(sortBy("last", "createdAt"));
 }
 
-export async function createEmptyMetronome() {
-  const metronome = await metronomeDatabase.create({});
-  return metronome;
+// Thank's chatgpt...
+function generateGUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
 }
 
-export async function getMetronome(id: string) {
-  return metronomeDatabase.get(id);
+export async function createEmptyMetronome(db: D1Database) {
+  const newGuid = generateGUID();
+  console.log('createEmptyMetronome')
+  console.log(newGuid);
+
+  const kdb = createKyselyDatabase(db)
+  const query = await kdb.insertInto('Songs').values(
+    {
+      name: 'New Song',
+      id: newGuid,
+      instrument: 'Piano',
+    }
+  ).returningAll().executeTakeFirstOrThrow()
+  return query
 }
 
-export async function updateMetronome(id: string, updates: SongMutation) {
-  const metronome = await metronomeDatabase.get(id);
-  if (!metronome) {
-    throw new Error(`No metronome found for ${id}`);
+export async function getMetronome(db: D1Database, id: string): Promise<SongType> {
+  const kdb = createKyselyDatabase(db);
+  const query = await kdb.selectFrom('Songs').where('id', '=', id).select((eb) => [
+    'Songs.id',
+    'Songs.name',
+    'Songs.createdAt',
+    'Songs.favorite',
+    'Songs.instrument',
+    jsonArrayFrom(
+      eb.selectFrom('Bars').select(
+        [
+          'Bars.id',
+          'Bars.bpm',
+          'Bars.delay',
+          'Bars.name',
+          'Bars.numberOfBars',
+          'Bars.songId',
+          'Bars.subBeats',
+          'Bars.timeSignature',
+      ]
+      ).whereRef('Songs.id', '=', 'Bars.songId').orderBy('Bars.id')
+    ).as('bars')
+  ]).executeTakeFirstOrThrow()
+
+  console.log(query)
+
+  // No matter what library/system I use, there is some tiny stupidity like this!
+  // @ts-ignore
+  query.favorite = query.favorite !== 0 ? true : false
+  // @ts-ignore
+  return query
+}
+
+export async function updateMetronome(db: D1Database, id: string, updates: SongMutation) {
+
+}
+
+export async function addBar(db: D1Database, id: string, bar: BarType) {
+  const kdb = createKyselyDatabase(db);
+  const newBar = {
+    ...bar
   }
-  await metronomeDatabase.set(id, { ...metronome, ...updates });
-  return metronome;
+  newBar.songId = id;
+  const result = await kdb.insertInto('Bars').values(newBar).executeTakeFirstOrThrow()
+  return result;
 }
 
-export async function deleteMetronome(id: string) {
-  metronomeDatabase.destroy(id);
+export async function setBarsForSong(db: D1Database, songId: string, bars: Array<BarType>) {
+  const kdb = createKyselyDatabase(db);
+  await kdb.deleteFrom('Bars').where('Bars.songId', '=', songId).execute()
+  await kdb.insertInto('Bars').values(bars.map(value => { return { ...value, id: undefined } })).execute()
 }
 
-const builtinMetronomes: Array<SongMutation> = [
-  {
-    name: 'Test Song',
-    favorite: false,
-    instrument: 'Piano',
-    bars: [
-      {
-        id: 0,
-        name: 'Allegro',
-        bpm: 120,
-        timeSignature: [4, 4],
-        subBeats: 1,
-        delay: 0,
-        numberOfBars: 2
-      },
-      {
-        id: 1,
-        name: 'Larghetto',
-        bpm: 60,
-        timeSignature: [4, 4],
-        subBeats: 4,
-        delay: 500,
-        numberOfBars: 2
-      },
-      {
-        id: 2,
-        name: 'Andantino',
-        bpm: 80,
-        timeSignature: [6, 8],
-        subBeats: 3,
-        delay: 0,
-        numberOfBars: 2
-      }
-    ]
-  }
-];
 
-builtinMetronomes.forEach(metronomeDatabase.create);
+export async function deleteMetronome(db: D1Database, id: string) {
+  const kdb = createKyselyDatabase(db);
+  const result = await kdb.deleteFrom('Songs').where('Songs.id', '=', id).execute();
+  console.log(`deleteMetronome: ${result}`)
+}
 
 const tempos = [
   {

@@ -1,4 +1,5 @@
 import type {
+  ActionFunctionArgs,
   LinksFunction,
   LoaderFunctionArgs
 } from "@remix-run/cloudflare";
@@ -21,10 +22,10 @@ import {
 import appStylesHref from "./app.css?url";
 import { createEmptyMetronome, getMetronomes } from "./data";
 import { useEffect } from "react";
-import { MetronomeCounter } from "./metronome";
 
-export const action = async () => {
-  const contact = await createEmptyMetronome();
+export const action = async ({ context, request }: ActionFunctionArgs) => {
+  const db = context.cloudflare.env.DB
+  const contact = await createEmptyMetronome(db);
   return redirect(`/songs/${contact.id}/edit`);
 };
 
@@ -33,11 +34,13 @@ export const links: LinksFunction = () => [
 ];
 
 export const loader = async ({
+  context,
   request,
 }: LoaderFunctionArgs) => {
+  const db = context.cloudflare.env.DB
   const url = new URL(request.url);
   const q = url.searchParams.get("q");
-  const metronome = await getMetronomes(q);
+  const metronome = await getMetronomes(db, q);
   return json({ metronome, q });
 };
 

@@ -5,32 +5,31 @@ import type {
 import { json, redirect } from "@remix-run/cloudflare";
 import { Form, Link, Outlet, useLoaderData, useNavigate } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import { getMetronome, SongRecord, updateMetronome, BarMutation } from "../data";
+import { getMetronome, SongRecord, updateMetronome, BarMutation, addBar } from "../data";
 
 export const action = async ({
     params,
     request,
+    context,
 }: ActionFunctionArgs) => {
     invariant(params.id, "Missing id param");
+    const db = context.cloudflare.env.DB
     const formData = await request.formData();
     const action = formData.get('action');
     if (action === 'save') {
       const updates = Object.fromEntries(formData);
-      await updateMetronome(params.id, updates);
+      await updateMetronome(db, params.id, updates);
       return redirect(`/songs/${params.id}`);
     } else if (action === 'new-bar') {
-      await updateMetronome(params.id, {
-        bars: [
-          {
-            id: 0,
-            bpm: 40,
-            delay: 0,
-            name: 'Lento',
-            numberOfBars: 2,
-            subBeats: 4,
-            timeSignature: [4, 4]
-          }
-        ]
+      await addBar(db, params.id, {
+        id: 0,
+        bpm: 40,
+        delay: 0,
+        name: 'Lento',
+        numberOfBars: 2,
+        subBeats: 4,
+        timeSignature: 4,
+        songId: ''
       })
       return null;
     } else {
@@ -40,9 +39,11 @@ export const action = async ({
 
 export const loader = async ({
   params,
+  context,
 }: LoaderFunctionArgs) => {
   invariant(params.id, "Missing id param");
-  const song = await getMetronome(params.id);
+  const db = context.cloudflare.env.DB
+  const song = await getMetronome(db, params.id);
   if (!song) {
     throw new Response("Not Found", { status: 404 });
   }
@@ -111,3 +112,4 @@ export default function EditContact() {
     <SongMutationForm key={song.id} song={song}></SongMutationForm>
   );
 }
+

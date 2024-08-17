@@ -7,10 +7,12 @@ import { deleteMetronome } from "../data";
 
 export const action = async ({
     params,
-    request,
+    context,
 }: ActionFunctionArgs) => {
-    invariant(params.contactId, "Missing contactId param");
-    await deleteMetronome(params.contactId);
+    console.log(params);
+    invariant(params.id, "Missing contactId param");
+    const db = context.cloudflare.env.DB
+    await deleteMetronome(db, params.id);
     return redirect(`/`);
 };
 

@@ -5,26 +5,31 @@ import type {
 import { json, redirect } from "@remix-run/cloudflare";
 import { Form, useLoaderData, useNavigate } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import { getMetronome, BarMutation } from "../data";
+import { getMetronome, BarMutation, BarType, setBarsForSong } from "../data";
 
 export const action = async ({
   params,
   request,
+  context,
 }: ActionFunctionArgs) => {
   invariant(params.id, "Missing id param");
   invariant(params.barId, "Missing barId param");
+  const db = context.cloudflare.env.DB
   const formData = await request.formData();
   const action = formData.get('action');
-  const bar: BarMutation = {
+  const bar: BarType = {
     id: parseInt(params.barId),
     bpm: parseInt(formData.get('bpm')?.toString() ?? '120'),
     delay: parseInt(formData.get('delay')?.toString() ?? '0'),
     name: formData.get('name')?.toString() ?? 'Default',
     numberOfBars: parseInt(formData.get('numberOfBars')?.toString() ?? '1'),
-    subBeats: parseInt(formData.get('subBeats')?.toString() ?? '1')
+    subBeats: parseInt(formData.get('subBeats')?.toString() ?? '1'),
+    timeSignature: parseInt(formData.get('timeSignatureNumerator')?.toString() ?? '4'),
+    songId: params.id
   }
-  bar.timeSignature = [parseInt(formData.get('timeSignatureNumerator')?.toString() ?? '4'), 4]
-  const song = await getMetronome(params.id);
+
+  const song = await getMetronome(db, params.id);
+
   if (song === null) {
     throw new Response("Song Not Found", { status: 404 })
   }
@@ -37,31 +42,34 @@ export const action = async ({
   }
 
   if (action === 'save') {
-    song.bars[index] = bar;
+    song.bars[index] = bar
     song.bars.every((value, index) => value.id = index)
-    return null;
   } else if (action === 'remove') {
     song.bars.splice(index, 1);
     song.bars.every((value, index) => value.id = index)
-    return null;
   } else if (action === 'add-before') {
     song.bars.splice(index, 0, bar);
     song.bars.every((value, index) => value.id = index)
-    return null;
   } else if (action === 'add-after') {
     song.bars.splice(index + 1, 0, bar);
     song.bars.forEach((value, index) => value.id = index)
-    return null;
   }
+
+  console.log('edit bars action')
+  console.log(song.bars);
+  await setBarsForSong(db, song.id, song.bars);
+  return redirect(`/songs/${params.id}/edit`)
 };
 
 export const loader = async ({
   params,
+  context,
 }: LoaderFunctionArgs) => {
   invariant(params.id, "Missing id param");
   invariant(params.barId, "Missing barId param");
+  const db = context.cloudflare.env.DB
 
-  const song = await getMetronome(params.id);
+  const song = await getMetronome(db, params.id);
   if (!song) {
     throw new Response("Not Found", { status: 404 });
   }
@@ -108,12 +116,7 @@ function BarForm({ bar }: { bar: BarMutation }) {
             <input
               type="number"
               name="timeSignatureNumerator"
-              defaultValue={bar.timeSignature ? bar.timeSignature[0] : 4}
-            />
-            <input
-              type="number"
-              name="timeSignatureDenominator"
-              defaultValue={bar.timeSignature ? bar.timeSignature[1] : 4}
+              defaultValue={bar.timeSignature}
             />
           </label>
         </div>

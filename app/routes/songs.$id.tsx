@@ -9,9 +9,11 @@ import { MetronomeCounter } from "~/metronome";
 
 export const loader = async ({
   params,
+  context,
 }: LoaderFunctionArgs) => {
   invariant(params.id, "Missing id param");
-  const contact = await getMetronome(params.id);
+  const db = context.cloudflare.env.DB
+  const contact = await getMetronome(db, params.id);
   if (!contact) {
     throw new Response("Not Found", { status: 404 });
   }
@@ -21,10 +23,12 @@ export const loader = async ({
 export const action = async ({
   params,
   request,
+  context,
 }: ActionFunctionArgs) => {
   invariant(params.id, "Missing id param");
+  const db = context.cloudflare.env.DB
   const formData = await request.formData();
-  return updateMetronome(params.id, {
+  return updateMetronome(db, params.id, {
     favorite: formData.get("favorite") === "true",
   });
 };

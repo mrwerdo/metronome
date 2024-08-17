@@ -104,7 +104,7 @@ class MetronomeState {
     let count = 0;
     for (; index < this.song.bars.length; index += 1) {
       const bar: BarRecord = this.song.bars[index] as BarRecord
-      const lengthOfBarInCounter = bar.numberOfBars * bar.timeSignature[0] * bar.subBeats
+      const lengthOfBarInCounter = bar.numberOfBars * bar.timeSignature * bar.subBeats
       if (count <= this.counter && this.counter < count + lengthOfBarInCounter) {
         break;
       } else {
@@ -120,7 +120,7 @@ class MetronomeState {
 
     const bar = this.song.bars[index]
     this.totalCountUntilStartOfBar = count;
-    this.numberOfBeats = (bar.timeSignature ? bar.timeSignature[0] : 0)
+    this.numberOfBeats = (bar.timeSignature ? bar.timeSignature : 0)
     this.numberOfSubBeats = (bar.subBeats ?? 0)
     try {
       this.transport.bpm.setValueAtTime(bar.bpm ?? 0, time)

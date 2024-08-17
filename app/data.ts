@@ -60,13 +60,13 @@ export type SongType = {
 
 import {
   Kysely,
-  ParseJSONResultsPlugin,
-  ValueNode,
+  ParseJSONResultsPlugin
 } from 'kysely'
 
 import { DB as Database, Songs } from './db.d'
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { D1Dialect } from "kysely-d1";
+import { songMutationSchema, songTypeSchema } from "./schema";
 
 function createKyselyDatabase(db: D1Database): Kysely<Database> {
   return new Kysely<Database>({
@@ -200,12 +200,11 @@ export async function getMetronome(db: D1Database, id: string): Promise<SongType
 
 export async function updateMetronome(db: D1Database, id: string, updates: SongMutation) {
   const kdb = createKyselyDatabase(db)
-
+  const data = songMutationSchema.parse(updates);
   const record = {
-    ...updates,
+    ...data,
     favorite: updates.favorite ? 1 : 0
   }
-
   const result = await kdb.updateTable('Songs').set(
     record
   ).where('Songs.id', '=', id).returningAll().executeTakeFirstOrThrow()
@@ -231,7 +230,7 @@ export async function setBarsForSong(db: D1Database, songId: string, bars: Array
 
 export async function deleteMetronome(db: D1Database, id: string) {
   const kdb = createKyselyDatabase(db);
-  const result = await kdb.deleteFrom('Songs').where('Songs.id', '=', id).execute();
+  await kdb.deleteFrom('Songs').where('Songs.id', '=', id).execute();
 }
 
 const tempos = [

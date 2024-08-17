@@ -86,3 +86,5 @@ npm run deploy
 - [Remix Cloudflare docs](https://remix.run/guides/vite#cloudflare)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [Vite](https://vitejs.dev/guide/features.html#css)
+- [ts-to-zod](https://github.com/fabien0102/ts-to-zod)
+- [zod](https://github.com/colinhacks/zod)

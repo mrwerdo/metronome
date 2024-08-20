@@ -2,8 +2,8 @@ import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
 } from "@remix-run/cloudflare";
-import { json, redirect } from "@remix-run/cloudflare";
-import { Form, useLoaderData, useNavigate } from "@remix-run/react";
+import { json } from "@remix-run/cloudflare";
+import { Form, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
 import { getSong, BarMutation, BarType, setBarsForSong } from "../data";
 

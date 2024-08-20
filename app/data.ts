@@ -1,7 +1,6 @@
 import { matchSorter } from "match-sorter";
 // @ts-expect-error - no types, but it's a tiny function
 import sortBy from "sort-by";
-import invariant from "tiny-invariant";
 
 export type BarMutation = {
   id?: number
@@ -61,12 +60,12 @@ export type SongType = {
 import {
   Kysely,
   ParseJSONResultsPlugin
-} from 'kysely'
+} from 'kysely';
 
-import { DB as Database, Songs } from './db.d'
+import { DB as Database } from './db.d';
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { D1Dialect } from "kysely-d1";
-import { songMutationSchema, songTypeSchema } from "./schema";
+import { songMutationSchema } from "./schema";
 
 function createKyselyDatabase(db: D1Database): Kysely<Database> {
   return new Kysely<Database>({

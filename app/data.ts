@@ -135,13 +135,13 @@ export async function getMetronomes(db: D1Database, query?: string | null) {
   ]).execute()
 
   if (!query) {
-    return result.sort(sortBy("last", "createdAt"));
+    return result.sort(sortBy("name", "createdAt"));
   }
 
   return matchSorter(result, query, {
-    keys: ["first", "last"],
+    keys: ["name", "instrument"],
   })
-  .sort(sortBy("last", "createdAt"));
+  .sort(sortBy("name", "createdAt"));
 }
 
 // Thank's chatgpt...

@@ -66,7 +66,7 @@ You will need to rerun typegen whenever you make changes to `wrangler.toml`.
 ## Deployment
 
 First, delete the database and re-create it:
-```
+```sh
 npm exec wrangler d1 execute -- metronome --remote --file sql/schema.sql
 ```
 

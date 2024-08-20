@@ -20,12 +20,12 @@ import {
 } from "@remix-run/react";
 
 import appStylesHref from "./app.css?url";
-import { createEmptyMetronome, getMetronomes } from "./data";
+import { createSong, getSongs } from "./data";
 import { useEffect } from "react";
 
 export const action = async ({ context, request }: ActionFunctionArgs) => {
   const db = context.cloudflare.env.DB
-  const contact = await createEmptyMetronome(db);
+  const contact = await createSong(db);
   return redirect(`/songs/${contact.id}/edit`);
 };
 
@@ -40,12 +40,12 @@ export const loader = async ({
   const db = context.cloudflare.env.DB
   const url = new URL(request.url);
   const q = url.searchParams.get("q");
-  const metronome = await getMetronomes(db, q);
-  return json({ metronome, q });
+  let songs = await getSongs(db, q);
+  return json({ songs, q });
 };
 
 export default function App() {
-  const { metronome: songs, q } = useLoaderData<typeof loader>();
+  const { songs, q } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const submit = useSubmit();
   const searching =

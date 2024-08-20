@@ -3,7 +3,7 @@ import { Form, useLoaderData, useFetcher } from "@remix-run/react";
 import { type FunctionComponent } from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/cloudflare";
 import invariant from "tiny-invariant";
-import { getMetronome, updateMetronome } from "../data";
+import { getSong, updateSong } from "../data";
 import type { BarMutation, SongRecord } from "../data";
 import { MetronomeCounter } from "~/metronome";
 
@@ -13,7 +13,7 @@ export const loader = async ({
 }: LoaderFunctionArgs) => {
   invariant(params.id, "Missing id param");
   const db = context.cloudflare.env.DB
-  const contact = await getMetronome(db, params.id);
+  const contact = await getSong(db, params.id);
   if (!contact) {
     throw new Response("Not Found", { status: 404 });
   }
@@ -28,7 +28,7 @@ export const action = async ({
   invariant(params.id, "Missing id param");
   const db = context.cloudflare.env.DB
   const formData = await request.formData();
-  return updateMetronome(db, params.id, {
+  return updateSong(db, params.id, {
     favorite: formData.get("favorite") === "true",
   });
 };

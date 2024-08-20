@@ -5,7 +5,7 @@ import type {
 import { json, redirect } from "@remix-run/cloudflare";
 import { Form, Link, Outlet, useLoaderData, useNavigate } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import { getMetronome, SongRecord, updateMetronome, BarMutation, addBar } from "../data";
+import { getSong, SongRecord, updateSong, BarMutation, addBar } from "../data";
 
 export const action = async ({
     params,
@@ -18,7 +18,7 @@ export const action = async ({
     const action = formData.get('action');
     if (action === 'save') {
       const updates = Object.fromEntries(formData);
-      await updateMetronome(db, params.id, updates);
+      await updateSong(db, params.id, updates);
       return redirect(`/songs/${params.id}`);
     } else if (action === 'new-bar') {
       await addBar(db, params.id, {
@@ -43,7 +43,7 @@ export const loader = async ({
 }: LoaderFunctionArgs) => {
   invariant(params.id, "Missing id param");
   const db = context.cloudflare.env.DB
-  const song = await getMetronome(db, params.id);
+  const song = await getSong(db, params.id);
   if (!song) {
     throw new Response("Not Found", { status: 404 });
   }

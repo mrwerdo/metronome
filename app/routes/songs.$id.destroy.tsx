@@ -3,7 +3,7 @@ import type {
 } from "@remix-run/cloudflare";
 import { redirect } from "@remix-run/cloudflare";
 import invariant from "tiny-invariant";
-import { deleteMetronome } from "../data";
+import { deleteSong } from "../data";
 
 export const action = async ({
     params,
@@ -11,7 +11,7 @@ export const action = async ({
 }: ActionFunctionArgs) => {
     invariant(params.id, "Missing contactId param");
     const db = context.cloudflare.env.DB
-    await deleteMetronome(db, params.id);
+    await deleteSong(db, params.id);
     return redirect(`/`);
 };
 

@@ -75,42 +75,7 @@ function createKyselyDatabase(db: D1Database): Kysely<Database> {
   })
 }
 
-const metronomeDatabase = {
-  records: {} as Record<string, SongRecord>,
-
-  async getAll(): Promise<SongRecord[]> {
-    return Object.keys(metronomeDatabase.records)
-      .map((key) => metronomeDatabase.records[key])
-      .sort(sortBy("-createdAt", "last"));
-  },
-
-  async get(id: string): Promise<SongRecord | null> {
-    return metronomeDatabase.records[id] || null;
-  },
-
-  async create(values: SongMutation): Promise<SongRecord> {
-    const id = values.id || Math.random().toString(36).substring(2, 9).toString();
-    const createdAt = new Date().toISOString();
-    const metronome = { id, createdAt, ...values };
-    metronomeDatabase.records[id] = metronome;
-    return metronome;
-  },
-
-  async set(id: string, values: SongMutation): Promise<SongRecord> {
-    const contact = await metronomeDatabase.get(id);
-    invariant(contact, `No metronome found for ${id}`);
-    const updatedMetronome = { ...contact, ...values };
-    metronomeDatabase.records[id] = updatedMetronome;
-    return updatedMetronome;
-  },
-
-  destroy(id: string): null {
-    delete metronomeDatabase.records[id];
-    return null;
-  },
-};
-
-export async function getMetronomes(db: D1Database, query?: string | null) {
+export async function getSongs(db: D1Database, query?: string | null) {
   const kdb = createKyselyDatabase(db);
   const result = await kdb.selectFrom('Songs').select((eb) => [
     'Songs.id',
@@ -153,7 +118,7 @@ function generateGUID(): string {
   });
 }
 
-export async function createEmptyMetronome(db: D1Database) {
+export async function createSong(db: D1Database) {
   const newGuid = generateGUID();
 
   const kdb = createKyselyDatabase(db)
@@ -167,7 +132,7 @@ export async function createEmptyMetronome(db: D1Database) {
   return query
 }
 
-export async function getMetronome(db: D1Database, id: string): Promise<SongType> {
+export async function getSong(db: D1Database, id: string): Promise<SongType> {
   const kdb = createKyselyDatabase(db);
   const query = await kdb.selectFrom('Songs').where('id', '=', id).select((eb) => [
     'Songs.id',
@@ -198,7 +163,7 @@ export async function getMetronome(db: D1Database, id: string): Promise<SongType
   return query
 }
 
-export async function updateMetronome(db: D1Database, id: string, updates: SongMutation) {
+export async function updateSong(db: D1Database, id: string, updates: SongMutation) {
   const kdb = createKyselyDatabase(db)
   const data = songMutationSchema.parse(updates);
   const record = {
@@ -228,7 +193,7 @@ export async function setBarsForSong(db: D1Database, songId: string, bars: Array
 }
 
 
-export async function deleteMetronome(db: D1Database, id: string) {
+export async function deleteSong(db: D1Database, id: string) {
   const kdb = createKyselyDatabase(db);
   await kdb.deleteFrom('Songs').where('Songs.id', '=', id).execute();
 }

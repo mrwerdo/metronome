@@ -108,17 +108,8 @@ export async function getSongs(db: D1Database, query?: string | null) {
   .sort(sortBy("name", "createdAt"));
 }
 
-// Thank's chatgpt...
-function generateGUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
-
 export async function createSong(db: D1Database) {
-  const newGuid = generateGUID();
+  const newGuid = crypto.randomUUID()
 
   const kdb = createKyselyDatabase(db)
   const query = await kdb.insertInto('Songs').values(

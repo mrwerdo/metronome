@@ -97,6 +97,7 @@ class MetronomeState {
 
   updateVariables(time: number): boolean {
     if (this.song.bars === undefined) {
+      console.log("returned");
       return true;
     }
 
@@ -115,6 +116,7 @@ class MetronomeState {
     if (index === this.song.bars.length) {
       this.counter -= 1;
       this.stop(time);
+      console.log("stopping");
       return true;
     }
 
@@ -149,14 +151,18 @@ class MetronomeState {
   toggleIsPlaying() {
     if (this.transport.state === "started") {
       this.stop()
+      this.setCounter(-2);
     } else {
       this.start()
+      this.setCounter(-1);
     }
   }
 
   start(time: number = 0) {
     this.transport.start();
     this.loop?.start();
+    console.log(this.transport)
+    console.log(this.loop)
     console.log(`state.current.counter = numberOfBeats * numberOfSubBeats - 1`)
     this.counter = -1;
     this.totalCountUntilStartOfBar = 0;
@@ -176,6 +182,58 @@ class MetronomeState {
 // #3D518C
 // #1B2CC1
 
+export const MetronomeStandalone = () => {
+  const [counter, setCounter] = useState(0);
+  const [isLoaded, setLoaded] = useState(false);
+  const state = useRef<MetronomeState | null>(null)
+  useEffect(() => {
+    const song: SongRecord = {
+      id: '0',
+      createdAt: '2024-08-20 16:06:00T1000',
+      favorite: false,
+      instrument: 'unknown',
+      name: 'Hidden',
+      bars: [
+        {
+          id: 0,
+          bpm: 120,
+          delay: 0,
+          name: 'Hidden',
+          numberOfBars: 9999,
+          subBeats: 1,
+          timeSignature: 4
+        }
+      ]
+    }
+    console.log('useEffect')
+    state.current = new MetronomeState(song, 4, 3, setCounter, setLoaded);
+    // return () => {
+    //   // state.current?.stop()
+    // }
+  }, [])
+  const handleClick = () => {
+    console.log("handle")
+    state.current?.toggleIsPlaying();
+    console.log(state.current?.transport.state);
+  }
+
+  console.log('rendering')
+  console.log(state.current?.transport.state);
+
+  return <>
+    <MetronomeCounterInternal
+      startStopEvent={handleClick}
+      counter={state.current?.counter ?? 0}
+      isLoaded={isLoaded}
+      numberOfBeats={state.current?.numberOfBeats ?? null}
+      numberOfSubBeats={state.current?.numberOfSubBeats ?? null}
+      currentBeat={state.current?.currentBeat() ?? null}
+      currentSubBeat={state.current?.currentSubBeat() ?? null}
+      isPlaying={state.current?.isPlaying() ?? null}
+    />
+  </>
+}
+
 export const MetronomeCounter = ({ song }: { song: SongRecord }) => {
 
   const [counter, setCounter] = useState(0);
@@ -184,7 +242,10 @@ export const MetronomeCounter = ({ song }: { song: SongRecord }) => {
   const state = useRef<MetronomeState | null>(null)
   useEffect(() => {
     state.current = new MetronomeState(song, 4, 3, setCounter, setLoaded);
-  }, [])
+    return () => {
+      state.current?.stop()
+    }
+  }, [song])
 
   const handleClick = () => {
     state.current?.toggleIsPlaying();
@@ -192,17 +253,32 @@ export const MetronomeCounter = ({ song }: { song: SongRecord }) => {
 
   return <>
     <MetronomeCounterInternal
-      handleClick={handleClick}
-      state={state.current}
-      counter={state.current?.counter ?? null}
+      startStopEvent={handleClick}
+      counter={state.current?.counter ?? 0}
       isLoaded={isLoaded}
+      numberOfBeats={state.current?.numberOfBeats ?? null}
+      numberOfSubBeats={state.current?.numberOfSubBeats ?? null}
+      currentBeat={state.current?.currentBeat() ?? null}
+      currentSubBeat={state.current?.currentSubBeat() ?? null}
+      isPlaying={state.current?.isPlaying() ?? null}
     />
   </>
 }
 
-export const MetronomeCounterInternal = ({ handleClick, state, counter, isLoaded }: { handleClick: () => void, state: MetronomeState | null, counter: number | null, isLoaded: boolean }) => {
-  const numberOfBeats = state?.numberOfBeats ?? 0
-  const numberOfSubBeats = state?.numberOfSubBeats ?? 0
+interface MetronomeCounterInternalProps {
+  startStopEvent: () => void
+  counter: number | null
+  isLoaded: boolean 
+  numberOfBeats: number | null
+  numberOfSubBeats: number | null
+  currentBeat: number | null
+  currentSubBeat: number | null
+  isPlaying: boolean | null
+}
+
+function MetronomeCounterInternal(props: MetronomeCounterInternalProps) {
+  const numberOfBeats = props.numberOfBeats ?? 0
+  const numberOfSubBeats = props.numberOfSubBeats ?? 0
   const div = createRef<HTMLDivElement>();
 
   useEffect(() => {
@@ -212,21 +288,21 @@ export const MetronomeCounterInternal = ({ handleClick, state, counter, isLoaded
   const keypress = (event: KeyboardEvent) => {
     if (event.key === ' ') {
       event.preventDefault();
-      handleClick();
+      props.startStopEvent();
     }
   }
 
-  const isPlaying = state?.isPlaying() ?? false;
+  const isPlaying = props.isPlaying ?? false;
 
-  const currentBeat = state?.currentBeat() ?? 0;
-  const subbeat = state?.currentSubBeat() ?? 0;
+  const currentBeat = props.currentBeat ?? 0;
+  const subbeat = props.currentSubBeat ?? 0;
 
   return (
     <>
       <div ref={div} tabIndex={0} onKeyDown={keypress}>
         <div style={{ display: 'flex', alignItems: 'baseline' }}>
           <p style={{ fontSize: 50 }}>{(currentBeat % numberOfBeats) + 1}.<span style={{ fontSize: 30 }}>{subbeat + 1}</span></p>
-          <p style={{ fontSize: 15, marginLeft: 'auto' }}>Counter: {state?.counter ?? 0}</p>
+          <p style={{ fontSize: 15, marginLeft: 'auto' }}>Counter: {props.counter}</p>
           <p style={{ fontSize: 15, marginLeft: '1em' }}>Normalized Counter: {subbeat}</p>
         </div>
         <div style={{
@@ -270,7 +346,7 @@ export const MetronomeCounterInternal = ({ handleClick, state, counter, isLoaded
             disabled=true, but only after a second reload of the url. Is it due to client side state?
             Or is it due to the server sending disabled=""?
           */}
-          <button disabled={!isLoaded} onClick={handleClick} suppressHydrationWarning>
+          <button disabled={!props.isLoaded} onClick={props.startStopEvent} suppressHydrationWarning>
             {isPlaying ? "Stop" : "Play"}
           </button>
         </div>

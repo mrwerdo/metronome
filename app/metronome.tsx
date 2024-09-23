@@ -48,9 +48,9 @@ export const MetronomeStandalone = () => {
       isLoaded={isLoaded}
       numberOfBeats={state.current?.numberOfBeats ?? null}
       numberOfSubBeats={state.current?.numberOfSubBeats ?? null}
-      currentBeat={state.current?.currentBeat() ?? null}
-      currentSubBeat={state.current?.currentSubBeat() ?? null}
-      isPlaying={state.current?.isPlaying() ?? null}
+      currentBeat={state.current?.currentBeat ?? null}
+      currentSubBeat={state.current?.currentSubBeat ?? null}
+      isPlaying={state.current?.isPlaying ?? null}
     />
   </>
 }
@@ -79,9 +79,9 @@ export const MetronomeCounter = ({ song }: { song: SongRecord }) => {
       isLoaded={isLoaded}
       numberOfBeats={state.current?.numberOfBeats ?? null}
       numberOfSubBeats={state.current?.numberOfSubBeats ?? null}
-      currentBeat={state.current?.currentBeat() ?? null}
-      currentSubBeat={state.current?.currentSubBeat() ?? null}
-      isPlaying={state.current?.isPlaying() ?? null}
+      currentBeat={state.current?.currentBeat ?? null}
+      currentSubBeat={state.current?.currentSubBeat ?? null}
+      isPlaying={state.current?.isPlaying ?? null}
     />
   </>
 }

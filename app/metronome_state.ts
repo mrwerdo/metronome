@@ -6,31 +6,57 @@ import { BarRecord, SongRecord } from "./data";
 import { TransportClass } from "tone/build/esm/core/clock/Transport";
 
 
-export class MetronomeState {
+export interface MetronomeStateSnapshot {
   counter: number
-  song: SongRecord
-  transport: TransportClass
-  loop?: Loop
-  sampler?: Sampler
   numberOfBeats: number
   numberOfSubBeats: number
-  totalCountUntilStartOfBar: number
-  setCounter: React.Dispatch<React.SetStateAction<number>>
-  setLoaded: React.Dispatch<React.SetStateAction<boolean>>
-  setNumberOfBeats?: React.Dispatch<React.SetStateAction<number>>
-  setNumberOfSubBeats?: React.Dispatch<React.SetStateAction<number>>
+  currentBeat: number
+  currentSubBeat: number
+  isPlaying: boolean
+}
 
-  currentBeat(): number {
-    const counter = this.counter - this.totalCountUntilStartOfBar
-    return (~~(counter / this.numberOfSubBeats)) % this.numberOfBeats;
+export class MetronomeState {
+  private _counter: number
+  private song: SongRecord
+  private transport: TransportClass
+  private loop?: Loop
+  private sampler?: Sampler
+  private _numberOfBeats: number
+  private _numberOfSubBeats: number
+  private _totalCountUntilStartOfBar: number
+  private setCounter2: React.Dispatch<React.SetStateAction<number>> | null
+  private setLoaded: React.Dispatch<React.SetStateAction<boolean>>
+  private setNumberOfBeats?: React.Dispatch<React.SetStateAction<number>>
+  private setNumberOfSubBeats?: React.Dispatch<React.SetStateAction<number>>
+  private listeners: Array<() => void> = [];
+  private _snapshot: MetronomeStateSnapshot = {
+    counter: 0,
+    numberOfBeats: 0,
+    numberOfSubBeats: 0,
+    currentBeat: 0,
+    currentSubBeat: 0,
+    isPlaying: false
+  };
+
+  public get numberOfBeats(): number {
+    return this._numberOfBeats;
   }
 
-  currentSubBeat(): number {
-    const counter = this.counter - this.totalCountUntilStartOfBar
-    return counter % this.numberOfSubBeats;
+  public get numberOfSubBeats(): number {
+    return this._numberOfSubBeats;
   }
 
-  isPlaying(): boolean {
+  public get currentBeat(): number {
+    const counter = this._counter - this._totalCountUntilStartOfBar
+    return (~~(counter / this._numberOfSubBeats)) % this._numberOfBeats;
+  }
+
+  public get currentSubBeat(): number {
+    const counter = this._counter - this._totalCountUntilStartOfBar
+    return counter % this._numberOfSubBeats;
+  }
+
+  public get isPlaying(): boolean {
     if (this.transport.state === "started") {
       return true;
     } else {
@@ -38,21 +64,26 @@ export class MetronomeState {
     }
   }
 
-  constructor(song: SongRecord,
+  public get counter(): number {
+    return this._counter;
+  }
+
+  constructor(
+    song: SongRecord,
     numberOfBeats: number,
     numberOfSubBeats: number,
-    setCounter: React.Dispatch<React.SetStateAction<number>>,
+    setCounter: React.Dispatch<React.SetStateAction<number>> | null,
     setLoaded: React.Dispatch<React.SetStateAction<boolean>>,
     setNumberOfBeats?: React.Dispatch<React.SetStateAction<number>>,
     setNumberOfSubBeats?: React.Dispatch<React.SetStateAction<number>>
   ) {
-    this.counter = 0
+    this._counter = 0
     this.song = song
-    this.numberOfBeats = numberOfBeats;
-    this.numberOfSubBeats = numberOfSubBeats;
-    this.totalCountUntilStartOfBar = 0;
+    this._numberOfBeats = numberOfBeats;
+    this._numberOfSubBeats = numberOfSubBeats;
+    this._totalCountUntilStartOfBar = 0;
     this.transport = getTransport();
-    this.setCounter = setCounter
+    this.setCounter2 = setCounter
     this.setLoaded = setLoaded
     this.setNumberOfBeats = setNumberOfBeats
     this.setNumberOfSubBeats = setNumberOfSubBeats
@@ -77,25 +108,51 @@ export class MetronomeState {
       console.log('not loading sampler ond loop')
     }
     this.updateVariables(0);
+    this.updateSnapshot();
+  }
+  
+  // public addListener(id: string, callback: () => void): void {
+  //   if (this.listeners.has(id)) {
+  //     throw new Error(`callback "${id}" already exists -  cannot overwrite`);
+  //   }
+  //   this.listeners.set(id, callback);
+  // }
+
+  // public removeListener(id: string) {
+  //   this.listeners.delete(id);
+  // }
+
+  public subscribe(callback: () => void): () => void {
+    this.listeners.push(callback);
+    return () => {
+      const index = this.listeners.indexOf(callback);
+      if (index > -1) {
+        this.listeners.splice(index, 1);
+      }
+    }
   }
 
-  next(time: number) {
-    this.counter += 1;
+  public snapshot(): MetronomeStateSnapshot {
+    return this._snapshot
+  }
+
+  private next(time: number) {
+    this._counter += 1;
     if (this.updateVariables(time)) {
       return
     }
-    if (this.currentBeat() === 0 && this.currentSubBeat() === 0) {
+    if (this.currentBeat === 0 && this.currentSubBeat === 0) {
       this.sampler?.triggerAttack("A1", time);
-    } else if (this.currentSubBeat() === 0 && this.numberOfSubBeats > 1) {
+    } else if (this.currentSubBeat === 0 && this._numberOfSubBeats > 1) {
       this.sampler?.triggerAttack("B1", time);
     } else {
       this.sampler?.triggerAttack("A2", time);
     }
-    console.log(`setCounter(${this.counter}, ${this.currentBeat()}, ${this.currentSubBeat()})`)
-    this.setCounter(this.counter);
+    console.log(`setCounter(${this._counter}, ${this.currentBeat}, ${this.currentSubBeat})`)
+    this.setCounter(this._counter);
   }
 
-  updateVariables(time: number): boolean {
+  private updateVariables(time: number): boolean {
     if (this.song.bars === undefined) {
       return true;
     }
@@ -105,7 +162,7 @@ export class MetronomeState {
     for (; index < this.song.bars.length; index += 1) {
       const bar: BarRecord = this.song.bars[index] as BarRecord
       const lengthOfBarInCounter = bar.numberOfBars * bar.timeSignature * bar.subBeats
-      if (count <= this.counter && this.counter < count + lengthOfBarInCounter) {
+      if (count <= this._counter && this._counter < count + lengthOfBarInCounter) {
         break;
       } else {
         count = count + lengthOfBarInCounter
@@ -113,16 +170,16 @@ export class MetronomeState {
     }
 
     if (index === this.song.bars.length) {
-      this.counter -= 1;
+      this._counter -= 1;
       this.stop(time);
       console.log("stopping");
       return true;
     }
 
     const bar = this.song.bars[index]
-    this.totalCountUntilStartOfBar = count;
-    this.numberOfBeats = (bar.timeSignature ? bar.timeSignature : 0)
-    this.numberOfSubBeats = (bar.subBeats ?? 0)
+    this._totalCountUntilStartOfBar = count;
+    this._numberOfBeats = (bar.timeSignature ? bar.timeSignature : 0)
+    this._numberOfSubBeats = (bar.subBeats ?? 0)
     try {
       this.transport.bpm.setValueAtTime(bar.bpm ?? 0, time)
     } catch {
@@ -131,9 +188,9 @@ export class MetronomeState {
     return false;
   }
 
-  setNumberOfBeatsAndSubBeats(beats: number, subbeats: number) {
-    this.numberOfBeats = beats
-    this.numberOfSubBeats = subbeats
+  private setNumberOfBeatsAndSubBeats(beats: number, subbeats: number) {
+    this._numberOfBeats = beats
+    this._numberOfSubBeats = subbeats
     const previous = this.loop;
     previous?.stop(0);
     this.loop = new Loop((time) => { this.next(time) }, `4n`);
@@ -141,13 +198,13 @@ export class MetronomeState {
     if (this.transport.state === "started") {
       this.loop.start(0);
       console.log(`state.current.counter = 0`)
-      this.counter = 0;
-      console.log(`setCounter(${this.counter % (this.numberOfBeats * this.numberOfSubBeats)})`)
-      this.setCounter(this.counter);
+      this._counter = 0;
+      console.log(`setCounter(${this._counter % (this._numberOfBeats * this._numberOfSubBeats)})`)
+      this.setCounter(this._counter);
     }
   }
 
-  toggleIsPlaying() {
+  public toggleIsPlaying() {
     if (this.transport.state === "started") {
       this.stop()
       this.setCounter(-2);
@@ -157,19 +214,44 @@ export class MetronomeState {
     }
   }
 
-  start(time: number = 0) {
+  public start(time: number = 0) {
     this.transport.start();
     this.loop?.start();
     console.log(this.transport)
     console.log(this.loop)
     console.log(`state.current.counter = numberOfBeats * numberOfSubBeats - 1`)
-    this.counter = -1;
-    this.totalCountUntilStartOfBar = 0;
+    this._counter = -1;
+    this._totalCountUntilStartOfBar = 0;
   }
 
-  stop(time: number = 0) {
+  public stop(time: number = 0) {
     this.transport.stop(time);
     this.transport.seconds = 0;
     this.loop?.stop(time);
+  }
+
+  private updateSnapshot() {
+    this._snapshot = {
+      counter: this.counter,
+      numberOfBeats: this.numberOfBeats,
+      numberOfSubBeats: this.numberOfSubBeats,
+      currentBeat: this.currentBeat,
+      currentSubBeat: this.currentSubBeat,
+      isPlaying: this.isPlaying,
+    }
+  }
+
+  private setCounter(c: number) {
+    if (this.setCounter2 !== null) {
+      this.setCounter2(c);
+    }
+
+    if (this.counter !== c) {
+      this.updateSnapshot();
+    }
+
+    for (const callback of this.listeners.values()) {
+      callback()
+    }
   }
 }

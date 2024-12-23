@@ -13,19 +13,21 @@ export interface MetronomeStateSnapshot {
   currentBeat: number
   currentSubBeat: number
   isPlaying: boolean
+  isLoaded: boolean
 }
 
 export class MetronomeState {
   private _counter: number
-  private song: SongRecord
+  private song: SongRecord | null
   private transport: TransportClass
   private loop?: Loop
   private sampler?: Sampler
   private _numberOfBeats: number
   private _numberOfSubBeats: number
   private _totalCountUntilStartOfBar: number
+  private _isLoaded: boolean
   private setCounter2: React.Dispatch<React.SetStateAction<number>> | null
-  private setLoaded: React.Dispatch<React.SetStateAction<boolean>>
+  private setLoaded: React.Dispatch<React.SetStateAction<boolean>> | null
   private setNumberOfBeats?: React.Dispatch<React.SetStateAction<number>>
   private setNumberOfSubBeats?: React.Dispatch<React.SetStateAction<number>>
   private listeners: Array<() => void> = [];
@@ -35,8 +37,16 @@ export class MetronomeState {
     numberOfSubBeats: 0,
     currentBeat: 0,
     currentSubBeat: 0,
-    isPlaying: false
+    isPlaying: false,
+    isLoaded: false
   };
+
+  public setSong(song: SongRecord) {
+    if (this.song !== song) {
+      // update?
+    }
+    this.song = song;
+  }
 
   public get numberOfBeats(): number {
     return this._numberOfBeats;
@@ -68,15 +78,20 @@ export class MetronomeState {
     return this._counter;
   }
 
+  public get isLoaded(): boolean {
+    return this._isLoaded
+  }
+
   constructor(
-    song: SongRecord,
+    song: SongRecord | null,
     numberOfBeats: number,
     numberOfSubBeats: number,
     setCounter: React.Dispatch<React.SetStateAction<number>> | null,
-    setLoaded: React.Dispatch<React.SetStateAction<boolean>>,
+    setLoaded: React.Dispatch<React.SetStateAction<boolean>> | null,
     setNumberOfBeats?: React.Dispatch<React.SetStateAction<number>>,
     setNumberOfSubBeats?: React.Dispatch<React.SetStateAction<number>>
   ) {
+    this._isLoaded = false
     this._counter = 0
     this.song = song
     this._numberOfBeats = numberOfBeats;
@@ -87,40 +102,26 @@ export class MetronomeState {
     this.setLoaded = setLoaded
     this.setNumberOfBeats = setNumberOfBeats
     this.setNumberOfSubBeats = setNumberOfSubBeats
-    try {
-      this.loop = new Loop((time) => { this.next(time) }, `4n`);
-      this.sampler = new Sampler(
-        {
-          "A1": studio_01,
-          "A2": studio_02,
-          "B1": coffee_shop
+    this.loop = new Loop((time) => { this.next(time) }, `4n`);
+    this.sampler = new Sampler(
+      {
+        "A1": studio_01,
+        "A2": studio_02,
+        "B1": coffee_shop
+      },
+      {
+        onload: () => {
+          this.didLoadSampler();
         },
-        {
-          onload: () => {
-            setLoaded(true);
-          },
-          onerror: (error) => {
-            console.log(`an error occured while loading samples: ${error}`)
-          }
+        onerror: (error) => {
+          console.log(`an error occured while loading samples: ${error}`)
         }
-      ).toDestination();
-    } catch {
-      console.log('not loading sampler ond loop')
-    }
+      }
+    ).toDestination();
     this.updateVariables(0);
     this.updateSnapshot();
+    this.updateListeners();
   }
-  
-  // public addListener(id: string, callback: () => void): void {
-  //   if (this.listeners.has(id)) {
-  //     throw new Error(`callback "${id}" already exists -  cannot overwrite`);
-  //   }
-  //   this.listeners.set(id, callback);
-  // }
-
-  // public removeListener(id: string) {
-  //   this.listeners.delete(id);
-  // }
 
   public subscribe(callback: () => void): () => void {
     this.listeners.push(callback);
@@ -134,6 +135,12 @@ export class MetronomeState {
 
   public snapshot(): MetronomeStateSnapshot {
     return this._snapshot
+  }
+
+  private updateListeners() {
+    for (const listener of this.listeners) {
+      listener();
+    }
   }
 
   private next(time: number) {
@@ -153,7 +160,7 @@ export class MetronomeState {
   }
 
   private updateVariables(time: number): boolean {
-    if (this.song.bars === undefined) {
+    if (this.song === null || this.song?.bars === undefined) {
       return true;
     }
 
@@ -238,6 +245,7 @@ export class MetronomeState {
       currentBeat: this.currentBeat,
       currentSubBeat: this.currentSubBeat,
       isPlaying: this.isPlaying,
+      isLoaded: this.isLoaded
     }
   }
 
@@ -245,13 +253,15 @@ export class MetronomeState {
     if (this.setCounter2 !== null) {
       this.setCounter2(c);
     }
+    this.updateSnapshot();
+    this.updateListeners();
+  }
 
-    if (this.counter !== c) {
-      this.updateSnapshot();
+  private didLoadSampler() {
+    if (this.setLoaded !== null) {
+      this.setLoaded(true);
     }
-
-    for (const callback of this.listeners.values()) {
-      callback()
-    }
+    this._isLoaded = true;
+    this.updateSnapshot();
   }
 }

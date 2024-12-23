@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, createRef, KeyboardEvent } from "react";
-import { MetronomeState } from "./metronome_state";
+import { useState, useRef, useEffect, createRef, KeyboardEvent, useSyncExternalStore } from "react";
+import { MetronomeState, MetronomeStateSnapshot } from "./metronome_state";
 import { SongRecord } from "./data";
 
 // https://coolors.co/091540-7692ff-abd2fa-3d518c-1b2cc1
@@ -55,33 +55,79 @@ export const MetronomeStandalone = () => {
   </>
 }
 
+let externalMetronomeState: MetronomeState | null;
+
+export function HydrateFallback() {
+  return <p>Loading Metronome...</p>
+}
+
+function subscribe(): ((callback: () => void) => (() => void)) {
+  let isServerSideRendered = false;
+  try {
+    if (externalMetronomeState === null || externalMetronomeState === undefined) {
+      externalMetronomeState = new MetronomeState(null, 4, 3, null, null);
+      isServerSideRendered = true;
+      return externalMetronomeState.subscribe.bind(externalMetronomeState);
+    } else {
+      return externalMetronomeState.subscribe.bind(externalMetronomeState);
+    }
+  } catch (error) {
+    console.log('Assuming server side rendering.');
+    externalMetronomeState = null;
+    isServerSideRendered = false;
+    return (callback: () => void) => {
+      return () => {
+        // cleanup is not necessary
+      };
+    };
+  }
+}
+
+const getSnapshotServerResult = {
+  counter: 0,
+  numberOfBeats: 4,
+  numberOfSubBeats: 3,
+  currentBeat: 0,
+  currentSubBeat: 0,
+  isPlaying: false,
+  isLoaded: false
+};
+
+function getSnapshot(): () => MetronomeStateSnapshot {
+  if (externalMetronomeState !== null) {
+    return externalMetronomeState.snapshot.bind(externalMetronomeState);
+  } else {
+    return () => {
+      return getSnapshotServerResult;
+    };
+  }
+}
+
 export const MetronomeCounter = ({ song }: { song: SongRecord }) => {
 
-  const [counter, setCounter] = useState(0);
-  const [isLoaded, setLoaded] = useState(false);
+  // This feels wierd?
+  if (externalMetronomeState !== null && externalMetronomeState !== undefined) {
+    externalMetronomeState.setSong(song);
+  }
 
-  const state = useRef<MetronomeState | null>(null)
-  useEffect(() => {
-    state.current = new MetronomeState(song, 4, 3, setCounter, setLoaded);
-    return () => {
-      state.current?.stop()
-    }
-  }, [song])
+  const state = useSyncExternalStore<MetronomeStateSnapshot>(subscribe(), getSnapshot(), getSnapshot())
 
   const handleClick = () => {
-    state.current?.toggleIsPlaying();
+    if (externalMetronomeState !== null) {
+      externalMetronomeState.toggleIsPlaying();
+    }
   }
 
   return <>
     <MetronomeCounterInternal
       startStopEvent={handleClick}
-      counter={state.current?.counter ?? 0}
-      isLoaded={isLoaded}
-      numberOfBeats={state.current?.numberOfBeats ?? null}
-      numberOfSubBeats={state.current?.numberOfSubBeats ?? null}
-      currentBeat={state.current?.currentBeat ?? null}
-      currentSubBeat={state.current?.currentSubBeat ?? null}
-      isPlaying={state.current?.isPlaying ?? null}
+      counter={state.counter ?? 0}
+      isLoaded={state.isLoaded}
+      numberOfBeats={state.numberOfBeats ?? null}
+      numberOfSubBeats={state.numberOfSubBeats ?? null}
+      currentBeat={state.currentBeat ?? null}
+      currentSubBeat={state.currentSubBeat ?? null}
+      isPlaying={state.isPlaying ?? null}
     />
   </>
 }
@@ -89,7 +135,7 @@ export const MetronomeCounter = ({ song }: { song: SongRecord }) => {
 interface MetronomeCounterInternalProps {
   startStopEvent: () => void
   counter: number | null
-  isLoaded: boolean 
+  isLoaded: boolean
   numberOfBeats: number | null
   numberOfSubBeats: number | null
   currentBeat: number | null
@@ -167,7 +213,7 @@ function MetronomeCounterInternal(props: MetronomeCounterInternalProps) {
             disabled=true, but only after a second reload of the url. Is it due to client side state?
             Or is it due to the server sending disabled=""?
           */}
-          <button disabled={!props.isLoaded} onClick={props.startStopEvent} suppressHydrationWarning>
+          <button onClick={props.startStopEvent} suppressHydrationWarning>
             {isPlaying ? "Stop" : "Play"}
           </button>
         </div>

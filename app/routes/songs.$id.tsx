@@ -4,8 +4,10 @@ import { type FunctionComponent } from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/cloudflare";
 import invariant from "tiny-invariant";
 import { getSong, updateSong } from "../data";
-import type { BarMutation, SongRecord } from "../data";
+import type { SongRecord } from "../data";
 import { MetronomeCounter } from "~/metronome";
+import { useMetronomeState } from "~/metronome_state";
+import Bar from "../bars";
 
 export const loader = async ({
   params,
@@ -33,14 +35,10 @@ export const action = async ({
   });
 };
 
-function Bar({ bar }: { bar: BarMutation }) {
-  return <div>
-    {bar.name}
-  </div>
-}
-
 export default function Songs() {
   const { contact: song } = useLoaderData<typeof loader>();
+
+  const metronome = useMetronomeState(song);
 
   return (
     <div id="contact">
@@ -75,7 +73,9 @@ export default function Songs() {
         <div style={{ display: 'flex' }}>
           {
             !song.bars ? null : song.bars.map((value, index) => {
-              return <Bar key={index} bar={value}></Bar>
+              const isActive = (metronome.bar?.id ?? -1) == value.id;
+              const currentBar = Math.floor((metronome.counter - metronome.totalCountUntilStartOfBar) / (metronome.numberOfBeats * metronome.numberOfSubBeats));
+              return <Bar key={index} bar={value} isActive={isActive} currentBar={currentBar} />
             })
           }
         </div>

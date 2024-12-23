@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, createRef, KeyboardEvent, useSyncExternalStore } from "react";
-import { MetronomeState, MetronomeStateSnapshot } from "./metronome_state";
+import { useState, useRef, useEffect, createRef, KeyboardEvent } from "react";
+import { MetronomeState, useMetronomeState } from "./metronome_state";
 import { SongRecord } from "./data";
 
 // https://coolors.co/091540-7692ff-abd2fa-3d518c-1b2cc1
@@ -55,67 +55,17 @@ export const MetronomeStandalone = () => {
   </>
 }
 
-let externalMetronomeState: MetronomeState | null;
-
 export function HydrateFallback() {
   return <p>Loading Metronome...</p>
 }
 
-function subscribe(): ((callback: () => void) => (() => void)) {
-  let isServerSideRendered = false;
-  try {
-    if (externalMetronomeState === null || externalMetronomeState === undefined) {
-      externalMetronomeState = new MetronomeState(null, 4, 3, null, null);
-      isServerSideRendered = true;
-      return externalMetronomeState.subscribe.bind(externalMetronomeState);
-    } else {
-      return externalMetronomeState.subscribe.bind(externalMetronomeState);
-    }
-  } catch (error) {
-    console.log('Assuming server side rendering.');
-    externalMetronomeState = null;
-    isServerSideRendered = false;
-    return (callback: () => void) => {
-      return () => {
-        // cleanup is not necessary
-      };
-    };
-  }
-}
-
-const getSnapshotServerResult = {
-  counter: 0,
-  numberOfBeats: 4,
-  numberOfSubBeats: 3,
-  currentBeat: 0,
-  currentSubBeat: 0,
-  isPlaying: false,
-  isLoaded: false
-};
-
-function getSnapshot(): () => MetronomeStateSnapshot {
-  if (externalMetronomeState !== null) {
-    return externalMetronomeState.snapshot.bind(externalMetronomeState);
-  } else {
-    return () => {
-      return getSnapshotServerResult;
-    };
-  }
-}
 
 export const MetronomeCounter = ({ song }: { song: SongRecord }) => {
 
-  // This feels wierd?
-  if (externalMetronomeState !== null && externalMetronomeState !== undefined) {
-    externalMetronomeState.setSong(song);
-  }
-
-  const state = useSyncExternalStore<MetronomeStateSnapshot>(subscribe(), getSnapshot(), getSnapshot())
+  const state = useMetronomeState(song);
 
   const handleClick = () => {
-    if (externalMetronomeState !== null) {
-      externalMetronomeState.toggleIsPlaying();
-    }
+    state.toggleIsPlaying();
   }
 
   return <>

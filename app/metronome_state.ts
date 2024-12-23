@@ -2,9 +2,65 @@ import { Sampler, Loop, getTransport } from "tone";
 import studio_01 from "../tones/studio-01.mp3?url";
 import studio_02 from "../tones/studio-02.mp3?url";
 import coffee_shop from "../tones/coffee-shop.mp3?url";
-import { BarRecord, SongRecord } from "./data";
+import { BarMutation, BarRecord, SongRecord } from "./data";
 import { TransportClass } from "tone/build/esm/core/clock/Transport";
+import { useSyncExternalStore } from "react";
 
+let externalMetronomeState: MetronomeState | null;
+
+function subscribe(): ((callback: () => void) => (() => void)) {
+  let isServerSideRendered = false;
+  try {
+    if (externalMetronomeState === null || externalMetronomeState === undefined) {
+      externalMetronomeState = new MetronomeState(null, 4, 3, null, null);
+      isServerSideRendered = true;
+      return externalMetronomeState.subscribe.bind(externalMetronomeState);
+    } else {
+      return externalMetronomeState.subscribe.bind(externalMetronomeState);
+    }
+  } catch (error) {
+    console.log('Assuming server side rendering.');
+    externalMetronomeState = null;
+    isServerSideRendered = false;
+    return (callback: () => void) => {
+      return () => {
+        // cleanup is not necessary
+      };
+    };
+  }
+}
+
+const getSnapshotServerResult = {
+  counter: 0,
+  numberOfBeats: 4,
+  numberOfSubBeats: 3,
+  currentBeat: 0,
+  currentSubBeat: 0,
+  isPlaying: false,
+  isLoaded: false,
+  totalCountUntilStartOfBar: 0,
+  bar: null,
+  toggleIsPlaying: () => { }
+};
+
+function getSnapshot(): () => MetronomeStateSnapshot {
+  if (externalMetronomeState !== null) {
+    return externalMetronomeState.snapshot.bind(externalMetronomeState);
+  } else {
+    return () => {
+      return getSnapshotServerResult;
+    };
+  }
+}
+
+export function useMetronomeState(song: SongRecord): MetronomeStateSnapshot {
+  // This feels wierd?
+  if (externalMetronomeState !== null && externalMetronomeState !== undefined) {
+    externalMetronomeState.setSong(song);
+  }
+
+  return useSyncExternalStore<MetronomeStateSnapshot>(subscribe(), getSnapshot(), getSnapshot())
+}
 
 export interface MetronomeStateSnapshot {
   counter: number
@@ -14,6 +70,9 @@ export interface MetronomeStateSnapshot {
   currentSubBeat: number
   isPlaying: boolean
   isLoaded: boolean
+  totalCountUntilStartOfBar: number
+  bar: BarMutation | null
+  toggleIsPlaying: () => void
 }
 
 export class MetronomeState {
@@ -38,7 +97,12 @@ export class MetronomeState {
     currentBeat: 0,
     currentSubBeat: 0,
     isPlaying: false,
-    isLoaded: false
+    isLoaded: false,
+    totalCountUntilStartOfBar: 0,
+    bar: null,
+    toggleIsPlaying: () => {
+      this.toggleIsPlaying();
+    }
   };
 
   public setSong(song: SongRecord) {
@@ -159,9 +223,9 @@ export class MetronomeState {
     this.setCounter(this._counter);
   }
 
-  private updateVariables(time: number): boolean {
+  private currentBar(): [BarMutation, number] | null {
     if (this.song === null || this.song?.bars === undefined) {
-      return true;
+      return null;
     }
 
     let index = 0;
@@ -177,16 +241,29 @@ export class MetronomeState {
     }
 
     if (index === this.song.bars.length) {
+      return null;
+    }
+
+    return [this.song.bars[index], count];
+  }
+
+  private updateVariables(time: number): boolean {
+    const [bar, count] = this.currentBar() ?? [null, 0];
+
+    if (bar === null && this.song !== null) {
       this._counter -= 1;
       this.stop(time);
       console.log("stopping");
       return true;
     }
 
-    const bar = this.song.bars[index]
+    if (bar === null) {
+      return true;
+    }
+
     this._totalCountUntilStartOfBar = count;
-    this._numberOfBeats = (bar.timeSignature ? bar.timeSignature : 0)
-    this._numberOfSubBeats = (bar.subBeats ?? 0)
+    this._numberOfBeats = bar.timeSignature ?? 0
+    this._numberOfSubBeats = bar.subBeats ?? 0
     try {
       this.transport.bpm.setValueAtTime(bar.bpm ?? 0, time)
     } catch {
@@ -245,7 +322,12 @@ export class MetronomeState {
       currentBeat: this.currentBeat,
       currentSubBeat: this.currentSubBeat,
       isPlaying: this.isPlaying,
-      isLoaded: this.isLoaded
+      isLoaded: this.isLoaded,
+      totalCountUntilStartOfBar: this._totalCountUntilStartOfBar,
+      bar: this.currentBar()?.[0] ?? null,
+      toggleIsPlaying: () => {
+        this.toggleIsPlaying();
+      }
     }
   }
 

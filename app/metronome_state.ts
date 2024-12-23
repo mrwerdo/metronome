@@ -182,6 +182,9 @@ export class MetronomeState {
         }
       }
     ).toDestination();
+
+    this.sampler.volume.value = 10;
+
     this.updateVariables(0);
     this.updateSnapshot();
     this.updateListeners();
@@ -210,7 +213,7 @@ export class MetronomeState {
   private next(time: number) {
     this._counter += 1;
     if (this.updateVariables(time)) {
-      return
+      return;
     }
     if (this.currentBeat === 0 && this.currentSubBeat === 0) {
       this.sampler?.triggerAttack("A1", time);
@@ -219,7 +222,7 @@ export class MetronomeState {
     } else {
       this.sampler?.triggerAttack("A2", time);
     }
-    console.log(`setCounter(${this._counter}, ${this.currentBeat}, ${this.currentSubBeat})`)
+    console.log(`setCounter(${this._counter}, ${this.currentBeat}, ${this.currentSubBeat})`);
     this.setCounter(this._counter);
   }
 
@@ -262,12 +265,13 @@ export class MetronomeState {
     }
 
     this._totalCountUntilStartOfBar = count;
-    this._numberOfBeats = bar.timeSignature ?? 0
-    this._numberOfSubBeats = bar.subBeats ?? 0
+    this._numberOfBeats = bar.timeSignature ?? 0;
+    this._numberOfSubBeats = bar.subBeats ?? 0;
     try {
-      this.transport.bpm.setValueAtTime(bar.bpm ?? 0, time)
+      // Adjust BPM to apply to the beat instead of the subbeat
+      this.transport.bpm.setValueAtTime((bar.bpm ?? 0) * this._numberOfSubBeats, time);
     } catch {
-
+      // Handle error
     }
     return false;
   }

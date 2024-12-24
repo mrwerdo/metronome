@@ -36,7 +36,6 @@ const Bar: React.FC<BarProps> = ({ bar, isActive, currentBar }) => {
   return (
     <div style={barStyle}>
       <h3>{bar.name}</h3>
-      <p>{bar.numberOfBars}</p>
       {renderProgressBoxes()}
     </div>
   );

@@ -1,5 +1,5 @@
 import { json } from "@remix-run/cloudflare";
-import { Form, useLoaderData, useFetcher } from "@remix-run/react";
+import { Form, useLoaderData, useFetcher, useSubmit } from "@remix-run/react";
 import { type FunctionComponent } from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/cloudflare";
 import invariant from "tiny-invariant";
@@ -15,11 +15,11 @@ export const loader = async ({
 }: LoaderFunctionArgs) => {
   invariant(params.id, "Missing id param");
   const db = context.cloudflare.env.DB
-  const contact = await getSong(db, params.id);
-  if (!contact) {
+  const song = await getSong(db, params.id);
+  if (!song) {
     throw new Response("Not Found", { status: 404 });
   }
-  return json({ contact });
+  return json({ song });
 };
 
 export const action = async ({
@@ -30,13 +30,28 @@ export const action = async ({
   invariant(params.id, "Missing id param");
   const db = context.cloudflare.env.DB
   const formData = await request.formData();
-  return updateSong(db, params.id, {
-    favorite: formData.get("favorite") === "true",
-  });
+  const action = formData.get('action');
+  if (action === 'favorite') {
+    return updateSong(db, params.id, {
+      favorite: formData.get("favorite") === "true",
+    });
+  } else if (action === 'paste') {
+    console.log(formData);
+    const data: string = formData.get('data')?.toString() as string;
+    console.log(data);
+    const song = JSON.parse(data ?? '{}');
+    song['id'] = params.id;
+    // fixme: change how songs are stored to be a single JSON document.
+    // return updateSong(db, params.id, song);
+    return {};
+  } else {
+    return {};
+  }
 };
 
 export default function Songs() {
-  const { contact: song } = useLoaderData<typeof loader>();
+  const { song } = useLoaderData<typeof loader>();
+  const submit = useSubmit();
 
   const metronome = useMetronomeState(song);
 
@@ -67,7 +82,21 @@ export default function Songs() {
               }
             }}
           >
-            <button type="submit">Delete</button>
+          <button type="submit">Delete</button>
+          </Form>
+          <button onClick={() => navigator.clipboard.writeText(JSON.stringify(song, null, 2))}>
+            Copy
+          </button>
+          <Form action="paste" method="post" onSubmit={(event) => {
+            event.preventDefault();
+            navigator.clipboard.readText().then((text) => {
+              const formData = new FormData()
+              formData.append('data', text);
+              formData.append('action', 'paste');
+              submit(formData, { method: 'post' });
+            });
+          }}>
+            <button type="submit">Paste</button>
           </Form>
         </div>
         <div style={{ display: 'flex' }}>

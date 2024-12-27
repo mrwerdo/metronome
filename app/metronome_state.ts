@@ -350,4 +350,10 @@ export class MetronomeState {
     this._isLoaded = true;
     this.updateSnapshot();
   }
+
+  public setVolume(volume: number) {
+    if (this.sampler) {
+      this.sampler.volume.value = volume;
+    }
+  }
 }

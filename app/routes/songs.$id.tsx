@@ -1,9 +1,9 @@
 import { json } from "@remix-run/cloudflare";
 import { Form, useLoaderData, useFetcher, useSubmit } from "@remix-run/react";
-import { type FunctionComponent } from "react";
+import { useState, type FunctionComponent } from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/cloudflare";
 import invariant from "tiny-invariant";
-import { getSong, updateSong } from "../data";
+import { getSong, setFavorite, updateSong } from "../data";
 import type { SongRecord } from "../data";
 import { MetronomeCounter } from "~/metronome";
 import { useMetronomeState } from "~/metronome_state";
@@ -32,19 +32,23 @@ export const action = async ({
   const formData = await request.formData();
   const action = formData.get('action');
   if (action === 'favorite') {
-    return updateSong(db, params.id, {
-      favorite: formData.get("favorite") === "true",
-    });
+    const value = formData.get("favorite") === "true";
+    return setFavorite(db, params.id, value);
   } else if (action === 'paste') {
-    console.log(formData);
     const data: string = formData.get('data')?.toString() as string;
-    console.log(data);
-    const song = JSON.parse(data ?? '{}');
+    if (data === null || data === undefined) {
+      return;
+    }
+    const song = JSON.parse(data);
+    if (song === null || data == undefined) {
+      return;
+    }
     song['id'] = params.id;
-    // fixme: change how songs are stored to be a single JSON document.
-    // return updateSong(db, params.id, song);
-    return {};
+    song['name'] = song['name'] + ' (Copy)';
+    console.log('update song');
+    return updateSong(db, params.id, song);
   } else {
+    console.log('unknown action');
     return {};
   }
 };
@@ -54,6 +58,12 @@ export default function Songs() {
   const submit = useSubmit();
 
   const metronome = useMetronomeState(song);
+  const [volume, setVolume] = useState(10);
+
+  const handleVolumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // setVolume(Number(event.target.value));
+    // metronome.setVolume(Number(event.target.value));
+  };
 
   return (
     <div id="contact">
@@ -109,6 +119,18 @@ export default function Songs() {
           }
         </div>
       </div>
+      <div>
+        <label htmlFor="volume">Volume: </label>
+        <input
+          type="range"
+          id="volume"
+          name="volume"
+          min="0"
+          max="20"
+          value={volume}
+          onChange={handleVolumeChange}
+        />
+      </div>
       <MetronomeCounter song={song} />
     </div>
   );
@@ -124,6 +146,7 @@ const Favorite: FunctionComponent<{
 
   return (
     <fetcher.Form method="post">
+      <input type="hidden" name="action" value="favorite" />
       <button
         aria-label={
           favorite

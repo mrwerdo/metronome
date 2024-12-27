@@ -12,6 +12,7 @@ import { SongRecord } from "./data";
 export const MetronomeStandalone = () => {
   const [counter, setCounter] = useState(0);
   const [isLoaded, setLoaded] = useState(false);
+  const [volume, setVolume] = useState(10);
   const state = useRef<MetronomeState | null>(null)
   useEffect(() => {
     const song: SongRecord = {
@@ -41,6 +42,11 @@ export const MetronomeStandalone = () => {
     state.current?.toggleIsPlaying();
   }
 
+  const handleVolumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setVolume(Number(event.target.value));
+    state.current?.setVolume(Number(event.target.value));
+  };
+
   return <>
     <MetronomeCounterInternal
       startStopEvent={handleClick}
@@ -52,6 +58,18 @@ export const MetronomeStandalone = () => {
       currentSubBeat={state.current?.currentSubBeat ?? null}
       isPlaying={state.current?.isPlaying ?? null}
     />
+    <div>
+      <label htmlFor="volume">Volume: </label>
+      <input
+        type="range"
+        id="volume"
+        name="volume"
+        min="0"
+        max="20"
+        value={volume}
+        onChange={handleVolumeChange}
+      />
+    </div>
   </>
 }
 

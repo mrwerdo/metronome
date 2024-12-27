@@ -9,27 +9,12 @@ export interface _CfKV {
   value: Buffer | null;
 }
 
-export interface Bars {
-  bpm: number;
-  delay: number;
-  id: number;
-  name: string;
-  numberOfBars: number;
-  songId: string;
-  subBeats: number;
-  timeSignature: number;
-}
-
 export interface Songs {
-  createdAt: Generated<string>;
-  favorite: Generated<number>;
-  id: string;
-  instrument: string;
-  name: string;
+  document: string;
+  id: Generated<string>;
 }
 
 export interface DB {
   _cf_KV: _CfKV;
-  Bars: Bars;
   Songs: Songs;
 }

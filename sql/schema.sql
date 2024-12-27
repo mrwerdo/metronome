@@ -1,67 +1,37 @@
-
 DROP TABLE IF EXISTS Songs;
-
--- Create Songs table if it doesn't exist
-CREATE TABLE IF NOT EXISTS Songs (
-    id TEXT PRIMARY KEY not null,
-    name TEXT not null,
-    favorite BOOLEAN DEFAULT 0 not null,
-    instrument TEXT not null,
-    createdAt TEXT DEFAULT (datetime('now')) not null
-);
-
 DROP TABLE IF EXISTS Bars;
 
--- Create Bars table if it doesn't exist
-CREATE TABLE IF NOT EXISTS Bars (
-    songId TEXT not null,
-    id INTEGER not null,
-    name TEXT not null,
-    bpm INTEGER not null,
-    timeSignature INTEGER not null,
-    subBeats INTEGER not null,
-    delay INTEGER not null,
-    numberOfBars INTEGER not null,
-    PRIMARY KEY (songId, id),
-    FOREIGN KEY(songId) REFERENCES Songs(id) ON DELETE CASCADE
+-- Create Songs table with a JSON document field and generated columns
+CREATE TABLE IF NOT EXISTS Songs (
+    id TEXT PRIMARY KEY NOT NULL DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-' || '4' || substr(lower(hex(randomblob(2))), 2) || '-' || substr('89ab', abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))), 2) || '-' || lower(hex(randomblob(6)))),
+    document JSON NOT NULL,
+    name TEXT GENERATED ALWAYS AS (json_extract(document, '$.name')) STORED,
+    favorite BOOLEAN GENERATED ALWAYS AS (json_extract(document, '$.favorite')) VIRTUAL,
+    instrument TEXT GENERATED ALWAYS AS (json_extract(document, '$.instrument')) VIRTUAL,
+    createdAt TEXT GENERATED ALWAYS AS (json_extract(document, '$.createdAt')) VIRTUAL,
+    CHECK (
+        json_valid(document) AND
+        json_extract(document, '$.name') IS NOT NULL AND
+        json_extract(document, '$.favorite') IS NOT NULL AND
+        json_extract(document, '$.instrument') IS NOT NULL AND
+        json_extract(document, '$.createdAt') IS NOT NULL AND
+        json_type(json_extract(document, '$.bars')) = 'array'
+    )
 );
 
--- Create index if it doesn't exist
-CREATE INDEX IF NOT EXISTS idx_songId ON Bars(songId);
+DROP TRIGGER IF EXISTS set_document_id;
 
--- Insert or replace data into Songs table
-INSERT OR REPLACE INTO Songs (id, name, favorite, instrument, createdAt) VALUES 
-('1', 'Test Song', 0, 'Piano', datetime('now')),
-('2', 'Morning Breeze', 1, 'Guitar', datetime('now')),
-('3', 'Nightfall Symphony', 0, 'Violin', datetime('now')),
-('4', 'Rhythmic Pulse', 1, 'Drums', datetime('now')),
-('5', 'Soothing Waves', 0, 'Flute', datetime('now'));
+CREATE TRIGGER set_document_id
+AFTER UPDATE ON Songs
+FOR EACH ROW
+BEGIN
+    UPDATE Songs SET document = json_set(NEW.document, '$.id', NEW.id) WHERE id = NEW.id;
+END;
 
--- Insert or replace data into Bars table
-INSERT OR REPLACE INTO Bars (songId, id, name, bpm, timeSignature, subBeats, delay, numberOfBars) VALUES 
--- Bars for "Test Song"
-('1', 0, 'Allegro', 120, 4, 1, 0, 2),
-('1', 1, 'Larghetto', 60, 4, 4, 500, 2),
-('1', 2, 'Andantino', 80, 6, 3, 0, 2),
-
--- Bars for "Morning Breeze"
-('2', 0, 'Moderato', 100, 4, 2, 200, 4),
-('2', 1, 'Adagio', 70, 3, 3, 0, 3),
-('2', 2, 'Vivace', 140, 4, 1, 0, 2),
-
--- Bars for "Nightfall Symphony"
-('3', 0, 'Lento', 50, 6, 2, 300, 4),
-('3', 1, 'Presto', 160, 4, 1, 0, 3),
-('3', 2, 'Grave', 40, 3, 4, 600, 2),
-
--- Bars for "Rhythmic Pulse"
-('4', 0, 'Allegretto', 110, 7, 1, 100, 4),
-('4', 1, 'Poco a Poco', 90, 5, 3, 0, 3),
-('4', 2, 'Molto Allegro', 130, 4, 2, 0, 2),
-
--- Bars for "Soothing Waves"
-('5', 0, 'Andante', 75, 4, 2, 400, 4),
-('5', 1, 'Largo', 50, 3, 3, 200, 3),
-('5', 2, 'Moderato Cantabile', 95, 4, 1, 0, 2);
-
-
+-- -- Insert sample data into Songs table
+INSERT OR REPLACE INTO Songs (id, document) VALUES 
+('1', '{"id": "1", "name": "Test Song", "favorite": false, "instrument": "Piano", "createdAt": "2024-08-20T16:06:00", "bars": [{"id": 0, "name": "Allegro", "bpm": 120, "timeSignature": 4, "subBeats": 1, "delay": 0, "numberOfBars": 2}, {"id": 1, "name": "Larghetto", "bpm": 60, "timeSignature": 4, "subBeats": 4, "delay": 500, "numberOfBars": 2}, {"id": 2, "name": "Andantino", "bpm": 80, "timeSignature": 6, "subBeats": 3, "delay": 0, "numberOfBars": 2}]}'),
+('2', '{"id": "2", "name": "Morning Breeze", "favorite": true, "instrument": "Guitar", "createdAt": "2024-08-20T16:06:00", "bars": [{"id": 0, "name": "Moderato", "bpm": 100, "timeSignature": 4, "subBeats": 2, "delay": 200, "numberOfBars": 4}, {"id": 1, "name": "Adagio", "bpm": 70, "timeSignature": 3, "subBeats": 3, "delay": 0, "numberOfBars": 3}, {"id": 2, "name": "Vivace", "bpm": 140, "timeSignature": 4, "subBeats": 1, "delay": 0, "numberOfBars": 2}]}'),
+('3', '{"id": "3", "name": "Nightfall Symphony", "favorite": false, "instrument": "Violin", "createdAt": "2024-08-20T16:06:00", "bars": [{"id": 0, "name": "Lento", "bpm": 50, "timeSignature": 6, "subBeats": 2, "delay": 300, "numberOfBars": 4}, {"id": 1, "name": "Presto", "bpm": 160, "timeSignature": 4, "subBeats": 1, "delay": 0, "numberOfBars": 3}, {"id": 2, "name": "Grave", "bpm": 40, "timeSignature": 3, "subBeats": 4, "delay": 600, "numberOfBars": 2}]}'),
+('4', '{"id": "4", "name": "Rhythmic Pulse", "favorite": true, "instrument": "Drums", "createdAt": "2024-08-20T16:06:00", "bars": [{"id": 0, "name": "Allegretto", "bpm": 110, "timeSignature": 7, "subBeats": 1, "delay": 100, "numberOfBars": 4}, {"id": 1, "name": "Poco a Poco", "bpm": 90, "timeSignature": 5, "subBeats": 3, "delay": 0, "numberOfBars": 3}, {"id": 2, "name": "Molto Allegro", "bpm": 130, "timeSignature": 4, "subBeats": 2, "delay": 0, "numberOfBars": 2}]}'),
+('5', '{"id": "5", "name": "Soothing Waves", "favorite": false, "instrument": "Flute", "createdAt": "2024-08-20T16:06:00", "bars": [{"id": 0, "name": "Andante", "bpm": 75, "timeSignature": 4, "subBeats": 2, "delay": 400, "numberOfBars": 4}, {"id": 1, "name": "Largo", "bpm": 50, "timeSignature": 3, "subBeats": 3, "delay": 200, "numberOfBars": 3}, {"id": 2, "name": "Moderato Cantabile", "bpm": 95, "timeSignature": 4, "subBeats": 1, "delay": 0, "numberOfBars": 2}]}');

@@ -2,6 +2,18 @@ import { matchSorter } from "match-sorter";
 // @ts-expect-error - no types, but it's a tiny function
 import sortBy from "sort-by";
 
+import {
+  Kysely,
+  ParseJSONResultsPlugin,
+  sql
+} from 'kysely';
+
+import { DB as Database } from './db.d';
+import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
+import { D1Dialect } from "kysely-d1";
+import { songMutationSchema, songTypeSchema } from "./schema";
+
+
 export type BarMutation = {
   id?: number
   name?: string
@@ -39,7 +51,6 @@ export type SongRecord = SongMutation & {
 
 export type BarType = {
   id: number,
-  songId: string
   name: string
   bpm: number
   timeSignature: number
@@ -57,16 +68,6 @@ export type SongType = {
   bars: Array<BarType>
 }
 
-import {
-  Kysely,
-  ParseJSONResultsPlugin
-} from 'kysely';
-
-import { DB as Database } from './db.d';
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
-import { D1Dialect } from "kysely-d1";
-import { songMutationSchema } from "./schema";
-
 function createKyselyDatabase(db: D1Database): Kysely<Database> {
   return new Kysely<Database>({
     dialect: new D1Dialect({ database: db }),
@@ -77,26 +78,14 @@ function createKyselyDatabase(db: D1Database): Kysely<Database> {
 export async function getSongs(db: D1Database, query?: string | null) {
   const kdb = createKyselyDatabase(db);
   const result = await kdb.selectFrom('Songs').select((eb) => [
-    'Songs.id',
-    'Songs.name',
-    'Songs.createdAt',
-    'Songs.favorite',
-    'Songs.instrument',
-    jsonArrayFrom(
-      eb.selectFrom('Bars').select(
-        [
-          'Bars.id',
-          'Bars.bpm',
-          'Bars.delay',
-          'Bars.name',
-          'Bars.numberOfBars',
-          'Bars.songId',
-          'Bars.subBeats',
-          'Bars.timeSignature',
-      ]
-      ).whereRef('Songs.id', '=', 'Bars.songId').orderBy('Bars.id')
-    ).as('bars')
-  ]).execute()
+     'Songs.id',
+     'Songs.document'
+  ]).execute().then(rows => {
+    return rows.map((row) => {
+      const result = songTypeSchema.parse(row.document) as SongType;
+      return result;
+    });
+  });
 
   if (!query) {
     return result.sort(sortBy("name", "createdAt"));
@@ -109,14 +98,27 @@ export async function getSongs(db: D1Database, query?: string | null) {
 }
 
 export async function createSong(db: D1Database) {
-  const newGuid = crypto.randomUUID()
-
   const kdb = createKyselyDatabase(db)
   const query = await kdb.insertInto('Songs').values(
     {
-      name: 'New Song',
-      id: newGuid,
-      instrument: 'Piano',
+      document: JSON.stringify({
+        id: '0',
+        createdAt: new Date().toISOString(),
+        favorite: false,
+        instrument: 'Violin',
+        name: 'My New Song',
+        bars: [
+          {
+            id: 0,
+            bpm: 120,
+            delay: 0,
+            name: 'Section 1',
+            numberOfBars: 10,
+            subBeats: 1,
+            timeSignature: 4
+          }
+        ]
+      })
     }
   ).returningAll().executeTakeFirstOrThrow()
   return query
@@ -125,45 +127,39 @@ export async function createSong(db: D1Database) {
 export async function getSong(db: D1Database, id: string): Promise<SongType> {
   const kdb = createKyselyDatabase(db);
   const query = await kdb.selectFrom('Songs').where('id', '=', id).select((eb) => [
-    'Songs.id',
-    'Songs.name',
-    'Songs.createdAt',
-    'Songs.favorite',
-    'Songs.instrument',
-    jsonArrayFrom(
-      eb.selectFrom('Bars').select(
-        [
-          'Bars.id',
-          'Bars.bpm',
-          'Bars.delay',
-          'Bars.name',
-          'Bars.numberOfBars',
-          'Bars.songId',
-          'Bars.subBeats',
-          'Bars.timeSignature',
-      ]
-      ).whereRef('Songs.id', '=', 'Bars.songId').orderBy('Bars.id')
-    ).as('bars')
-  ]).executeTakeFirstOrThrow()
-
-  // No matter what library/system I use, there is some tiny stupidity like this!
-  // @ts-ignore
-  query.favorite = query.favorite !== 0 ? true : false
-  // @ts-ignore
+     'Songs.id',
+     'Songs.document'
+  ]).executeTakeFirstOrThrow().then(row => {
+    const result = songTypeSchema.parse(row.document) as SongType;
+    return result;
+  });
   return query
 }
 
-export async function updateSong(db: D1Database, id: string, updates: SongMutation) {
+export async function updateSong(db: D1Database, id: string, updates: SongType) {
+  songTypeSchema["~validate"](updates);
   const kdb = createKyselyDatabase(db)
-  const data = songMutationSchema.parse(updates);
-  const record = {
-    ...data,
-    favorite: updates.favorite ? 1 : 0
-  }
   const result = await kdb.updateTable('Songs').set(
-    record
+    {
+      document: JSON.stringify(updates)
+    }
   ).where('Songs.id', '=', id).returningAll().executeTakeFirstOrThrow()
-  return result
+  return result;
+}
+
+export async function setFavorite(db: D1Database, id: string, favorite: boolean): Promise<SongType> {
+  const kdb = createKyselyDatabase(db);
+  const favoriteText = favorite ? 'true' : 'false';
+  const result = await kdb
+    .updateTable('Songs')
+    .set({
+      document: sql`json_set(document, "$.favorite", json(${favoriteText}))`
+    })
+    .where('Songs.id', '=', id)
+    .returningAll()
+    .executeTakeFirstOrThrow();
+  const value = songTypeSchema.parse(result.document) as SongType;
+  return value;
 }
 
 export async function addBar(db: D1Database, id: string, bar: BarType) {
@@ -171,15 +167,15 @@ export async function addBar(db: D1Database, id: string, bar: BarType) {
   const newBar = {
     ...bar
   }
-  newBar.songId = id;
-  const result = await kdb.insertInto('Bars').values(newBar).executeTakeFirstOrThrow()
-  return result;
+  // newBar.songId = id;
+  // const result = await kdb.insertInto('Bars').values(newBar).executeTakeFirstOrThrow()
+  // return result;
 }
 
 export async function setBarsForSong(db: D1Database, songId: string, bars: Array<BarType>) {
   const kdb = createKyselyDatabase(db);
-  await kdb.deleteFrom('Bars').where('Bars.songId', '=', songId).execute()
-  await kdb.insertInto('Bars').values(bars.map((value, index) => { return { ...value, id: index } })).execute()
+  // await kdb.deleteFrom('Bars').where('Bars.songId', '=', songId).execute()
+  // await kdb.insertInto('Bars').values(bars.map((value, index) => { return { ...value, id: index } })).execute()
 }
 
 

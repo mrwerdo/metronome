@@ -41,7 +41,6 @@ export const songRecordSchema = songMutationSchema.and(
 
 export const barTypeSchema = z.object({
   id: z.number(),
-  songId: z.string(),
   name: z.string(),
   bpm: z.number(),
   timeSignature: z.number(),

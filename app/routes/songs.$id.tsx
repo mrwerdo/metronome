@@ -113,7 +113,7 @@ export default function Songs() {
           {
             !song.bars ? null : song.bars.map((value, index) => {
               const isActive = (metronome.bar?.id ?? 0) == value.id;
-              const currentBar = Math.floor((metronome.counter - metronome.totalCountUntilStartOfBar) / (metronome.numberOfBeats * metronome.numberOfSubBeats));
+              const currentBar = Math.max(0, Math.floor((metronome.counter - metronome.totalCountUntilStartOfBar) / (metronome.numberOfBeats * metronome.numberOfSubBeats)));
               return <Bar key={index} bar={value} isActive={isActive} currentBar={currentBar} />
             })
           }

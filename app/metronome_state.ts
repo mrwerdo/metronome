@@ -85,7 +85,7 @@ export class MetronomeState {
   private _numberOfSubBeats: number
   private _totalCountUntilStartOfBar: number
   private _isLoaded: boolean
-  private setCounter2: React.Dispatch<React.SetStateAction<number>> | null
+  private setUICounter: React.Dispatch<React.SetStateAction<number>> | null
   private setLoaded: React.Dispatch<React.SetStateAction<boolean>> | null
   private setNumberOfBeats?: React.Dispatch<React.SetStateAction<number>>
   private setNumberOfSubBeats?: React.Dispatch<React.SetStateAction<number>>
@@ -162,11 +162,11 @@ export class MetronomeState {
     this._numberOfSubBeats = numberOfSubBeats;
     this._totalCountUntilStartOfBar = 0;
     this.transport = getTransport();
-    this.setCounter2 = setCounter
+    this.setUICounter = setCounter
     this.setLoaded = setLoaded
     this.setNumberOfBeats = setNumberOfBeats
     this.setNumberOfSubBeats = setNumberOfSubBeats
-    this.loop = new Loop((time) => { this.next(time) }, `4n`);
+    this.loop = new Loop((time) => { this.update(time) }, `4n`);
     this.sampler = new Sampler(
       {
         "A1": studio_01,
@@ -210,7 +210,7 @@ export class MetronomeState {
     }
   }
 
-  private next(time: number) {
+  private update(time: number) {
     this._counter += 1;
     if (this.updateVariables(time)) {
       return;
@@ -223,7 +223,7 @@ export class MetronomeState {
       this.sampler?.triggerAttack("A2", time);
     }
     console.log(`setCounter(${this._counter}, ${this.currentBeat}, ${this.currentSubBeat})`);
-    this.setCounter(this._counter);
+    this.updateUserInterface(this._counter);
   }
 
   private currentBar(): [BarMutation, number] | null {
@@ -281,24 +281,24 @@ export class MetronomeState {
     this._numberOfSubBeats = subbeats
     const previous = this.loop;
     previous?.stop(0);
-    this.loop = new Loop((time) => { this.next(time) }, `4n`);
+    this.loop = new Loop((time) => { this.update(time) }, `4n`);
 
     if (this.transport.state === "started") {
       this.loop.start(0);
       console.log(`state.current.counter = 0`)
       this._counter = 0;
       console.log(`setCounter(${this._counter % (this._numberOfBeats * this._numberOfSubBeats)})`)
-      this.setCounter(this._counter);
+      this.updateUserInterface(this._counter);
     }
   }
 
   public toggleIsPlaying() {
     if (this.transport.state === "started") {
       this.stop()
-      this.setCounter(-2);
+      this.updateUserInterface(-2);
     } else {
       this.start()
-      this.setCounter(-1);
+      this.updateUserInterface(-1);
     }
   }
 
@@ -335,9 +335,9 @@ export class MetronomeState {
     }
   }
 
-  private setCounter(c: number) {
-    if (this.setCounter2 !== null) {
-      this.setCounter2(c);
+  private updateUserInterface(c: number) {
+    if (this.setUICounter !== null) {
+      this.setUICounter(c);
     }
     this.updateSnapshot();
     this.updateListeners();

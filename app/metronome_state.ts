@@ -121,7 +121,9 @@ export class MetronomeState {
     }
 
     this._totalCountUntilStartOfBar = this.song.bars.slice(0, index).reduce((acc, bar) => acc + (bar as BarRecord).numberOfBars * (bar as BarRecord).timeSignature * (bar as BarRecord).subBeats, 0);
-    this._counter = this._totalCountUntilStartOfBar + (barIndex * bar.timeSignature * bar.subBeats);
+    this._counter = this._totalCountUntilStartOfBar + (barIndex * bar.timeSignature * bar.subBeats) - 1;
+    this.updateVariables(0);
+    this.updateUserInterface(this._counter);
   }
 
   public setSong(song: SongRecord) {
@@ -327,8 +329,8 @@ export class MetronomeState {
     console.log(this.transport)
     console.log(this.loop)
     console.log(`state.current.counter = numberOfBeats * numberOfSubBeats - 1`)
-    this._counter = -1;
-    this._totalCountUntilStartOfBar = 0;
+    // this._counter = -1;
+    // this._totalCountUntilStartOfBar = 0;
   }
 
   public stop(time: number = 0) {

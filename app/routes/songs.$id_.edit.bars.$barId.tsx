@@ -25,7 +25,6 @@ export const action = async ({
     numberOfBars: parseInt(formData.get('numberOfBars')?.toString() ?? '1'),
     subBeats: parseInt(formData.get('subBeats')?.toString() ?? '1'),
     timeSignature: parseInt(formData.get('timeSignatureNumerator')?.toString() ?? '4'),
-    songId: params.id
   }
 
   const song = await getSong(db, params.id);

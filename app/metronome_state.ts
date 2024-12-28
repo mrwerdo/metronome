@@ -2,7 +2,7 @@ import { Sampler, Loop, getTransport } from "tone";
 import studio_01 from "../tones/studio-01.mp3?url";
 import studio_02 from "../tones/studio-02.mp3?url";
 import coffee_shop from "../tones/coffee-shop.mp3?url";
-import { BarMutation, BarRecord, SongRecord } from "./data";
+import { BarMutation, BarRecord, BarType, SongRecord } from "./data";
 import { TransportClass } from "tone/build/esm/core/clock/Transport";
 import { useSyncExternalStore } from "react";
 
@@ -40,6 +40,7 @@ const getSnapshotServerResult = {
   isLoaded: false,
   totalCountUntilStartOfBar: 0,
   bar: null,
+  setBar: (bar: BarType, barIndex: number) => { },
   toggleIsPlaying: () => { }
 };
 
@@ -72,6 +73,7 @@ export interface MetronomeStateSnapshot {
   isLoaded: boolean
   totalCountUntilStartOfBar: number
   bar: BarMutation | null
+  setBar(bar: BarType, barIndex: number): void
   toggleIsPlaying: () => void
 }
 
@@ -100,10 +102,27 @@ export class MetronomeState {
     isLoaded: false,
     totalCountUntilStartOfBar: 0,
     bar: null,
+    setBar(bar: BarType, barIndex: number) {
+      this.setBar(bar, barIndex);
+    },
     toggleIsPlaying: () => {
       this.toggleIsPlaying();
     }
   };
+
+  private setBar(bar: BarType, barIndex: number) {
+    if (this.song === null || this.song?.bars === undefined) {
+      return;
+    }
+
+    const index = this.song.bars.indexOf(bar);
+    if (index === -1) {
+      return;
+    }
+
+    this._totalCountUntilStartOfBar = this.song.bars.slice(0, index).reduce((acc, bar) => acc + (bar as BarRecord).numberOfBars * (bar as BarRecord).timeSignature * (bar as BarRecord).subBeats, 0);
+    this._counter = this._totalCountUntilStartOfBar + (barIndex * bar.timeSignature * bar.subBeats);
+  }
 
   public setSong(song: SongRecord) {
     if (this.song !== song) {
@@ -329,6 +348,9 @@ export class MetronomeState {
       isLoaded: this.isLoaded,
       totalCountUntilStartOfBar: this._totalCountUntilStartOfBar,
       bar: this.currentBar()?.[0] ?? null,
+      setBar: (bar: BarType, barIndex: number) => {
+        this.setBar(bar, barIndex);
+      },
       toggleIsPlaying: () => {
         this.toggleIsPlaying();
       }

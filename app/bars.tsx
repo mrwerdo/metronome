@@ -6,9 +6,10 @@ interface BarProps {
   isActive: boolean;
   // zero indexd, and which means that it will always be less than bar.numberOfBars
   currentBar: number;
+  didSelectBar: (bar: BarType, barIndex: number) => void;
 }
 
-const Bar: React.FC<BarProps> = ({ bar, isActive, currentBar }) => {
+const Bar: React.FC<BarProps> = ({ bar, isActive, currentBar, didSelectBar }) => {
   const barStyle = {
     padding: "10px",
     margin: "5px",
@@ -28,13 +29,20 @@ const Bar: React.FC<BarProps> = ({ bar, isActive, currentBar }) => {
             backgroundColor: (isActive && i === currentBar) ? "#FF5733" : "#D3D3D3",
             display: "inline-block",
           }}
+          onClick={(event) => {
+            event.stopPropagation();
+            didSelectBar(bar, i)
+          }}
         ></div>
       );
     }
     return boxes;
   };
   return (
-    <div style={barStyle}>
+    <div style={barStyle} onClick={(event) => {
+      event.stopPropagation();
+      didSelectBar(bar, -1)
+    }}>
       <h3>{bar.name}</h3>
       {renderProgressBoxes()}
     </div>

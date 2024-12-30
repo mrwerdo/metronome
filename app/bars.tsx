@@ -1,5 +1,6 @@
 import React from "react";
 import type { BarType } from "./data";
+import { Link } from "@remix-run/react";
 
 interface BarProps {
   bar: BarType;
@@ -33,7 +34,8 @@ const Bar: React.FC<BarProps> = ({ bar, isActive, currentBar, didSelectBar }) =>
             event.stopPropagation();
             didSelectBar(bar, i)
           }}
-        ></div>
+        >
+        </div>
       );
     }
     return boxes;
@@ -43,6 +45,9 @@ const Bar: React.FC<BarProps> = ({ bar, isActive, currentBar, didSelectBar }) =>
       event.stopPropagation();
       didSelectBar(bar, -1)
     }}>
+      <Link to={`edit/bars/${bar.id}`} replace={true}>
+        <i className="ri-edit-box-line"></i>
+      </Link>
       <h3>{bar.name}</h3>
       {renderProgressBoxes()}
     </div>

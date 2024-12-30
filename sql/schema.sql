@@ -21,8 +21,15 @@ CREATE TABLE IF NOT EXISTS Songs (
 
 DROP TRIGGER IF EXISTS set_document_id;
 
-CREATE TRIGGER set_document_id
+CREATE TRIGGER set_document_id_after_update
 AFTER UPDATE ON Songs
+FOR EACH ROW
+BEGIN
+    UPDATE Songs SET document = json_set(NEW.document, '$.id', NEW.id) WHERE id = NEW.id;
+END;
+
+CREATE TRIGGER set_document_id_after_insert
+AFTER INSERT ON Songs
 FOR EACH ROW
 BEGIN
     UPDATE Songs SET document = json_set(NEW.document, '$.id', NEW.id) WHERE id = NEW.id;

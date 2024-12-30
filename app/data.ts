@@ -9,9 +9,8 @@ import {
 } from 'kysely';
 
 import { DB as Database } from './db.d';
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { D1Dialect } from "kysely-d1";
-import { songMutationSchema, songTypeSchema } from "./schema";
+import { songTypeSchema } from "./schema";
 
 
 export type BarMutation = {
@@ -102,7 +101,6 @@ export async function createSong(db: D1Database) {
   const query = await kdb.insertInto('Songs').values(
     {
       document: JSON.stringify({
-        id: '0',
         createdAt: new Date().toISOString(),
         favorite: false,
         instrument: 'Violin',
@@ -161,23 +159,6 @@ export async function setFavorite(db: D1Database, id: string, favorite: boolean)
   const value = songTypeSchema.parse(result.document) as SongType;
   return value;
 }
-
-export async function addBar(db: D1Database, id: string, bar: BarType) {
-  const kdb = createKyselyDatabase(db);
-  const newBar = {
-    ...bar
-  }
-  // newBar.songId = id;
-  // const result = await kdb.insertInto('Bars').values(newBar).executeTakeFirstOrThrow()
-  // return result;
-}
-
-export async function setBarsForSong(db: D1Database, songId: string, bars: Array<BarType>) {
-  const kdb = createKyselyDatabase(db);
-  // await kdb.deleteFrom('Bars').where('Bars.songId', '=', songId).execute()
-  // await kdb.insertInto('Bars').values(bars.map((value, index) => { return { ...value, id: index } })).execute()
-}
-
 
 export async function deleteSong(db: D1Database, id: string) {
   const kdb = createKyselyDatabase(db);

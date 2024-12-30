@@ -2,10 +2,10 @@ import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
 } from "@remix-run/cloudflare";
-import { json } from "@remix-run/cloudflare";
+import { json, redirect } from "@remix-run/cloudflare";
 import { Form, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import { getSong, BarMutation, BarType, setBarsForSong } from "../data";
+import { getSong, BarMutation, BarType, updateSong } from "../data";
 
 export const action = async ({
   params,
@@ -46,6 +46,12 @@ export const action = async ({
   } else if (action === 'remove') {
     song.bars.splice(index, 1);
     song.bars.every((value, index) => value.id = index)
+    await updateSong(db, params.id, song);
+    if (song.bars.length === 0) {
+      return redirect("/songs/" + params.id + "/edit");
+    } else {
+      return redirect("/songs/" + params.id + "/edit/bars/" + Math.max(0, (index - 1)));
+    }
   } else if (action === 'add-before') {
     song.bars.splice(index, 0, bar);
     song.bars.every((value, index) => value.id = index)
@@ -54,8 +60,7 @@ export const action = async ({
     song.bars.forEach((value, index) => value.id = index)
   }
 
-  await setBarsForSong(db, song.id, song.bars);
-  return null;
+  return await updateSong(db, params.id, song);
 };
 
 export const loader = async ({

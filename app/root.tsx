@@ -16,9 +16,11 @@ import {
   ScrollRestoration,
   useLoaderData,
   useNavigation,
-  useSubmit
+  useSubmit,
+  Link
 } from "@remix-run/react";
 
+import 'remixicon/fonts/remixicon.css'
 import appStylesHref from "./app.css?url";
 import { createSong, getSongs } from "./data";
 import { useEffect } from "react";
@@ -71,7 +73,7 @@ export default function App() {
       </head>
       <body>
         <div id="sidebar">
-          <h1>Metromone</h1>
+          <h1><Link to="/" style={{textDecoration: 'none', color: 'black'}}>Metronome</Link></h1>
           <div>
             <Form
               id="search-form"

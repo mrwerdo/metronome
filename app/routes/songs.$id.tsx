@@ -1,5 +1,5 @@
 import { json } from "@remix-run/cloudflare";
-import { Form, useLoaderData, useFetcher, useSubmit } from "@remix-run/react";
+import { Form, useLoaderData, useFetcher, useSubmit, Outlet, Link } from "@remix-run/react";
 import { useState, type FunctionComponent } from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/cloudflare";
 import invariant from "tiny-invariant";
@@ -79,7 +79,6 @@ export default function Songs() {
           <Form action="edit">
             <button type="submit">Edit</button>
           </Form>
-
           <Form
             action="destroy"
             method="post"
@@ -126,6 +125,7 @@ export default function Songs() {
             })
           }
         </div>
+        <Outlet />
       </div>
       <div>
         <label htmlFor="volume">Volume: </label>

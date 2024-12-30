@@ -3,9 +3,9 @@ import type {
     LoaderFunctionArgs,
 } from "@remix-run/cloudflare";
 import { json, redirect } from "@remix-run/cloudflare";
-import { Form, Link, Outlet, useLoaderData, useNavigate } from "@remix-run/react";
+import { Form, Link, Outlet, useNavigate, useRouteLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import { getSong, SongRecord, updateSong, BarMutation, addBar } from "../data";
+import { getSong, updateSong, BarMutation, addBar, SongType } from "../data";
 
 export const action = async ({
     params,
@@ -16,25 +16,34 @@ export const action = async ({
     const db = context.cloudflare.env.DB
     const formData = await request.formData();
     const action = formData.get('action');
-    if (action === 'save') {
-      const updates = Object.fromEntries(formData);
-      await updateSong(db, params.id, updates);
-      return redirect(`/songs/${params.id}`);
+
+    const song = await getSong(db, params.id);
+    if (!song) {
+      throw new Response("Not Found", { status: 404 });
+    }
+
+    if (action === "save") {
+      song.name = formData.get('name')?.toString() ?? song.name;
+      song.instrument = formData.get('instrument')?.toString() ?? song.instrument;
+      await updateSong(db, song.id, song);
     } else if (action === 'new-bar') {
-      await addBar(db, params.id, {
-        id: 0,
-        bpm: 40,
-        delay: 0,
-        name: 'Lento',
-        numberOfBars: 2,
-        subBeats: 4,
-        timeSignature: 4,
-        songId: ''
-      })
-      return null;
+      song.bars = [
+        {
+          id: 0,
+          bpm: 120,
+          delay: 0,
+          name: 'Section 1',
+          numberOfBars: 10,
+          subBeats: 1,
+          timeSignature: 4
+        }
+      ]
+      await updateSong(db, song.id, song);
     } else {
       throw new Response("Bad Request", { status: 400 });
     }
+    
+    return {};
 };
 
 export const loader = async ({
@@ -50,17 +59,21 @@ export const loader = async ({
   return json({ song });
 };
 
-function Bar({ bar, index }: { bar: BarMutation, index: number }) {
-  return <div style={{padding: '1em'}}>
-    <p>Bar {index + 1}</p>
-    <Link to={`bars/${bar.id}`} replace>{bar.name}</Link>
-  </div>
+interface ParentLoaderData {
+  song: SongType;
 }
 
-const SongMutationForm = ({ song }: { song: SongRecord }) => {
+
+export default function EditBars() {
   const navigate = useNavigate();
+  const data = useRouteLoaderData<ParentLoaderData>("routes/songs.$id");
+  if (!data) {
+    return <div>Loading...</div>
+  }
 
   let shouldShowNewButton: boolean
+
+  const song = data.song;
 
   if (song.bars === undefined) {
     shouldShowNewButton = true;
@@ -69,7 +82,7 @@ const SongMutationForm = ({ song }: { song: SongRecord }) => {
   }
 
   return (
-    <>
+    <div key={song.id}>
       <Form method="post">
         <div>
           <label>
@@ -92,24 +105,8 @@ const SongMutationForm = ({ song }: { song: SongRecord }) => {
           shouldShowNewButton ? <button type="submit" name="action" value="new-bar">Add Bar</button> : null
         }
       </Form>
-      <div style={{ display: 'flex' }}>
-        {
-          !song.bars ? null : song.bars.map((value, index) => {
-            return <Bar key={index} bar={value} index={index}></Bar>
-          })
-        }
-      </div>
-      <Outlet />
-    </>
-  );
+    </div>
+  )
 };
 
-
-export default function EditContact() {
-  const { song } = useLoaderData<typeof loader>();
-
-  return (
-    <SongMutationForm key={song.id} song={song}></SongMutationForm>
-  );
-}
 

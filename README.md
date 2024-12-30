@@ -88,3 +88,4 @@ npm run deploy
 - [Vite](https://vitejs.dev/guide/features.html#css)
 - [ts-to-zod](https://github.com/fabien0102/ts-to-zod)
 - [zod](https://github.com/colinhacks/zod)
+- [Remix Icons](https://remixicon.com)

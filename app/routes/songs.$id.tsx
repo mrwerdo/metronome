@@ -61,8 +61,8 @@ export default function Songs() {
   const [volume, setVolume] = useState(10);
 
   const handleVolumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    // setVolume(Number(event.target.value));
-    // metronome.setVolume(Number(event.target.value));
+    setVolume(Number(event.target.value));
+    metronome.setVolume(Number(event.target.value));
   };
 
   return (

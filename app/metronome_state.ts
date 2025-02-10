@@ -40,6 +40,7 @@ const getSnapshotServerResult = {
   isLoaded: false,
   totalCountUntilStartOfBar: 0,
   bar: null,
+  setVolume: (volume: number) => { },
   setBar: (bar: BarType, barIndex: number) => { },
   toggleIsPlaying: () => { }
 };
@@ -75,6 +76,7 @@ export interface MetronomeStateSnapshot {
   bar: BarMutation | null
   setBar(bar: BarType, barIndex: number): void
   toggleIsPlaying: () => void
+  setVolume(volume: number): void
 }
 
 export class MetronomeState {
@@ -102,6 +104,8 @@ export class MetronomeState {
     isLoaded: false,
     totalCountUntilStartOfBar: 0,
     bar: null,
+    setVolume: (volume: number) => {
+    },
     setBar(bar: BarType, barIndex: number) {
       this.setBar(bar, barIndex);
     },
@@ -350,6 +354,9 @@ export class MetronomeState {
       isLoaded: this.isLoaded,
       totalCountUntilStartOfBar: this._totalCountUntilStartOfBar,
       bar: this.currentBar()?.[0] ?? null,
+      setVolume: (volume: number) => {
+        this.setVolume(volume);
+      },
       setBar: (bar: BarType, barIndex: number) => {
         this.setBar(bar, barIndex);
       },
@@ -377,7 +384,7 @@ export class MetronomeState {
 
   public setVolume(volume: number) {
     if (this.sampler) {
-      this.sampler.volume.value = volume;
+      this.sampler.volume.value = volume; // Adjusting volume to match the range
     }
   }
 }

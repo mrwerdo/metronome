@@ -8,6 +8,7 @@ import type { SongRecord } from "../data";
 import { MetronomeCounter } from "~/metronome";
 import { useMetronomeState } from "~/metronome_state";
 import Bar from "../bars";
+import { Settings } from '../controls';
 
 export const loader = async ({
   params,
@@ -74,6 +75,8 @@ export default function Songs() {
         </h1>
 
         <p>{song.instrument}</p>
+
+        <Settings onClick={() => console.log('Settings')}/>
 
         <div>
           <Form action="edit">

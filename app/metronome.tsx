@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, createRef, KeyboardEvent } from "react";
 import { MetronomeState, useMetronomeState } from "./metronome_state";
 import { SongRecord } from "./data";
+import { Beginning, Back, Play, Forward, End } from "./controls";
 
 // https://coolors.co/091540-7692ff-abd2fa-3d518c-1b2cc1
 // #091540
@@ -100,6 +101,43 @@ export const MetronomeCounter = ({ song }: { song: SongRecord }) => {
   </>
 }
 
+
+// Was sure whether css was affecting performance, most likely it was my code not using the counter correctly.
+function calculateStyles(numberOfBeats: number, numberOfSubBeats: number, counter: number, index: number): object {
+  let className = 'metronome_bar_counter';
+  let backgroundColor = '#416788';
+  const offset = index % numberOfSubBeats;
+  const beat = (index - offset) / numberOfSubBeats;
+
+
+  if (offset === 0) {
+    className += ' metronome_bar_counter_beat';
+    backgroundColor = '#7389AE';
+  } else {
+    className += ' metronome_bar_counter_subbeat';
+    backgroundColor = '#416788';
+  }
+  
+  if ((counter ?? 0) % (numberOfBeats * numberOfSubBeats) === index) {
+    className += ' metronome_bar_counter_current';
+    backgroundColor = '#81D2C7';
+  }
+
+  const styles = {
+    padding: '5px',
+    textAlign: 'center',
+    fontWeight: className.includes('metronome_bar_counter_current') ? 'bold' : 'normal',
+    width: '20px',
+    alignContent: 'end',
+    height: className.includes('metronome_bar_counter_beat') ? '100px' : '30px',
+    backgroundColor: backgroundColor,
+    borderRadius: '2px'
+  };
+
+  return styles;
+}
+
+
 interface MetronomeCounterInternalProps {
   startStopEvent: () => void
   counter: number | null
@@ -135,55 +173,33 @@ function MetronomeCounterInternal(props: MetronomeCounterInternalProps) {
   return (
     <>
       <div ref={div} tabIndex={0} onKeyDown={keypress}>
-        <div style={{ display: 'flex', alignItems: 'baseline' }}>
-          <p style={{ fontSize: 50 }}>{(currentBeat % numberOfBeats) + 1}.<span style={{ fontSize: 30 }}>{subbeat + 1}</span></p>
-          <p style={{ fontSize: 15, marginLeft: 'auto' }}>Counter: {props.counter}</p>
-          <p style={{ fontSize: 15, marginLeft: '1em' }}>Normalized Counter: {subbeat}</p>
-        </div>
-        <div style={{
-          display: 'grid',
-          gridTemplateRows: '1fr',
-          gridTemplateColumns: `repeat(${numberOfBeats}, 1fr)`,
-          gridAutoFlow: 'column'
-        }}>
-          {
-            Array(numberOfBeats).fill(1).map((value, index) => {
-              return <span key={index} style={{
-                padding: '5px',
-                textAlign: 'center',
-                fontWeight: currentBeat === index ? 'bold' : 'normal',
-                backgroundColor: currentBeat === index ? '#7692FF' : '#ABD2FA',
-              }}>{index + 1}</span>
-            })
-          }
-        </div>
-        <div style={{
-          display: 'grid',
-          gridTemplateRows: '1fr',
-          gridTemplateColumns: `repeat(${numberOfSubBeats}, 1fr)`,
-          gridAutoFlow: 'column'
-        }}>
-          {
-            Array(numberOfSubBeats).fill(1).map((value, index) => {
-              return <span key={index} style={{
-                padding: '5px',
-                textAlign: 'center',
-                fontWeight: subbeat === index ? 'bold' : 'normal',
-                backgroundColor: subbeat === index ? '#7692FF' : '#ABD2FA',
-              }}>{index + 1}</span>
-            })
-          }
-        </div>
         <div>
-          {/*
-            No idea why this happens, but without suppressHydrationWarning, Firefox and Chrome 
-            throw an error-warning which says that the server sent disabled="" and the client calculated
-            disabled=true, but only after a second reload of the url. Is it due to client side state?
-            Or is it due to the server sending disabled=""?
-          */}
-          <button onClick={props.startStopEvent} suppressHydrationWarning>
-            {isPlaying ? "Stop" : "Play"}
-          </button>
+          <p>Counter: {props.counter}</p>
+          <p>Normalized Counter: {subbeat}</p>
+          <p style={{ fontSize: 100, textAlign: "center", margin: 0 }}>{(currentBeat % numberOfBeats) + 1}.<span style={{ fontSize: 50 }}>{subbeat + 1}</span></p>
+        </div>
+        <div style={{
+          display: 'grid',
+          gridTemplateRows: '1fr',
+          gridTemplateColumns: `repeat(${numberOfBeats * numberOfSubBeats}, 28px)`,
+          gridAutoFlow: 'column',
+          alignItems: 'end',
+          justifyContent: 'center'
+        }}>
+          {
+            Array(numberOfBeats * numberOfSubBeats).fill(1).map((value, index) => {
+              const offset = index % numberOfSubBeats;
+              const beat = (index - offset) / numberOfSubBeats;
+              return <span style={calculateStyles(numberOfBeats, numberOfSubBeats, currentBeat * numberOfSubBeats + subbeat, index)} key={index}>{offset === 0 ? (beat+1).toString() : ''}</span>
+            })
+          }
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', margin: '2em' }}>
+          <Beginning onClick={() => console.log('beginning')}/>
+          <Back onClick={() => console.log('back')}/>
+          <Play onClick={props.startStopEvent}/>
+          <Forward onClick={() => console.log('forward')} />
+          <End onClick={() => console.log('end')}/>
         </div>
       </div>
     </>

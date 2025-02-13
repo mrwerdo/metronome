@@ -299,15 +299,6 @@ i {
   text-decoration: underline;
 }
 
-#contact img {
-  width: 12rem;
-  height: 12rem;
-  background: #c8c8c8;
-  margin-right: 2rem;
-  border-radius: 1.5rem;
-  object-fit: cover;
-}
-
 #contact h1 ~ div {
   display: flex;
   gap: 0.5rem;
@@ -396,4 +387,28 @@ i {
 
 div:focus-visible {
   outline: none;
+}
+
+.metronome_bar_counter {
+  padding: 5px;
+  text-align: center;
+  font-weight: normal;
+  background: #ABD2FA;
+  width: 20px;
+  align-content: end;
+}
+
+.metronome_bar_counter_beat {
+  background-color: #7389AE;
+  height: 50px;
+}
+
+.metronome_bar_counter_subbeat {
+  height: 30px;
+  background-color: #416788;
+}
+
+.metronome_bar_counter_current {
+  font-weight: bold;
+  background-color: #81D2C7;
 }

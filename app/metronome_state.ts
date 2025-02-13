@@ -1,7 +1,7 @@
 import { Sampler, Loop, getTransport } from "tone";
-import studio_01 from "../tones/studio-01.mp3?url";
-import studio_02 from "../tones/studio-02.mp3?url";
-import coffee_shop from "../tones/coffee-shop.mp3?url";
+import studio_01 from "./assets/tones/studio-01.mp3?url";
+import studio_02 from "./assets/tones/studio-02.mp3?url";
+import coffee_shop from "./assets/tones/coffee-shop.mp3?url";
 import { BarMutation, BarRecord, BarType, SongRecord } from "./data";
 import { TransportClass } from "tone/build/esm/core/clock/Transport";
 import { useSyncExternalStore } from "react";

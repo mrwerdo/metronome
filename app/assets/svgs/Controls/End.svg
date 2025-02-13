@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64px" height="64px" viewBox="0 0 64 64" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Controls/End</title>
+    <g id="Mobile-Layout" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="iPhone-16" transform="translate(-293, -597)" fill="#000000" fill-rule="nonzero">
+            <g id="Group" transform="translate(34, 597)">
+                <g id="Controls/End" transform="translate(271, 8)">
+                    <path d="M38,0 C36.8954305,0 36,0.8954305 36,2 L36,19.3075 L6.1075,0.6125 C4.88159284,-0.157065008 3.33492536,-0.201881819 2.0665141,0.495406893 C0.798102844,1.1926956 0.00715473647,2.52257902 0,3.97 L0,44.03 C0.0152099269,45.4738925 0.807445254,46.7975048 2.07281916,47.4931238 C3.33819307,48.1887428 4.88025557,48.1483732 6.1075,47.3875 L36,28.6925 L36,46 C36,47.1045695 36.8954305,48 38,48 C39.1045695,48 40,47.1045695 40,46 L40,2 C40,0.8954305 39.1045695,0 38,0 Z M4,44 L4,4 L36,24.0150113 L4,44 Z" id="Shape"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

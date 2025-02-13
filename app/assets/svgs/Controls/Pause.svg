@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64px" height="64px" viewBox="0 0 64 64" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Controls/Pause</title>
+    <g id="Controls/Pause" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <path d="M50,8 L40,8 C37.790861,8 36,9.790861 36,12 L36,52 C36,54.209139 37.790861,56 40,56 L50,56 C52.209139,56 54,54.209139 54,52 L54,12 C54,9.790861 52.209139,8 50,8 Z M50,52 L40,52 L40,12 L50,12 L50,52 Z M24,8 L14,8 C11.790861,8 10,9.790861 10,12 L10,52 C10,54.209139 11.790861,56 14,56 L24,56 C26.209139,56 28,54.209139 28,52 L28,12 C28,9.790861 26.209139,8 24,8 Z M24,52 L14,52 L14,12 L24,12 L24,52 Z" id="Shape" fill="#000000" fill-rule="nonzero"></path>
+        <rect id="Rectangle" x="-0.370685429" y="-0.489426567" width="64" height="64"></rect>
+    </g>
+</svg>

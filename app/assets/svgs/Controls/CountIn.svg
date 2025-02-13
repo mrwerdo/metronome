@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="27px" height="19px" viewBox="0 0 27 19" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Controls/CountIn</title>
+    <g id="Mobile-Layout" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" font-family="Helvetica" font-weight="normal">
+        <g id="iPhone-16" transform="translate(-350, -62)" fill="#416788">
+            <g id="Controls/CountIn" transform="translate(350, 62)">
+                <text id="1" font-size="8">
+                    <tspan x="0" y="15">1</tspan>
+                </text>
+                <text id="2" font-size="10">
+                    <tspan x="5" y="15">2</tspan>
+                </text>
+                <text id="3" font-size="12">
+                    <tspan x="11" y="15">3</tspan>
+                </text>
+                <text id="4" font-size="16">
+                    <tspan x="18" y="15">4</tspan>
+                </text>
+            </g>
+        </g>
+    </g>
+</svg>

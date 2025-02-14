@@ -4,10 +4,9 @@ import { useState, type FunctionComponent } from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/cloudflare";
 import invariant from "tiny-invariant";
 import { getSong, setFavorite, updateSong } from "../data";
-import type { SongRecord } from "../data";
+import type { BarType, SongType } from "../data";
 import { MetronomeCounter } from "~/metronome";
 import { useMetronomeState } from "~/metronome_state";
-import Bar from "../bars";
 import { Settings } from '../controls';
 
 export const loader = async ({
@@ -66,6 +65,10 @@ export default function Songs() {
     metronome.setVolume(Number(event.target.value));
   };
 
+  const selectBar = (bar: BarType, barIndex: number) => {
+    metronome.setBar(bar, barIndex === -1 ? 0 : barIndex);
+  }
+
   return (
     <div id="contact">
       <div>
@@ -76,7 +79,7 @@ export default function Songs() {
 
         <p>{song.instrument}</p>
 
-        <Settings onClick={() => console.log('Settings')}/>
+        {/* <Settings onClick={() => console.log('Settings')}/> */}
 
         <div>
           <Form action="edit">
@@ -111,23 +114,6 @@ export default function Songs() {
             <button type="submit">Paste</button>
           </Form>
         </div>
-        <div style={{ display: 'flex' }}>
-          {
-            !song.bars ? null : song.bars.map((value, index) => {
-              const isActive = (metronome.bar?.id ?? 0) == value.id;
-              const currentBar = Math.max(0, Math.floor((metronome.counter - metronome.totalCountUntilStartOfBar) / (metronome.numberOfBeats * metronome.numberOfSubBeats)));
-              return <Bar
-                key={index}
-                bar={value}
-                isActive={isActive}
-                currentBar={currentBar}
-                didSelectBar={(bar, barIndex) => {
-                  metronome.setBar(bar, barIndex === -1 ? 0 : barIndex);
-                }}
-              />
-            })
-          }
-        </div>
         <Outlet />
       </div>
       <div>
@@ -142,13 +128,13 @@ export default function Songs() {
           onChange={handleVolumeChange}
         />
       </div>
-      <MetronomeCounter song={song} />
+      <MetronomeCounter song={song} selectBar={selectBar} />
     </div>
   );
 }
 
 const Favorite: FunctionComponent<{
-  song: Pick<SongRecord, "favorite">;
+  song: Pick<SongType, "favorite">;
 }> = ({ song }) => {
   const fetcher = useFetcher();
   const favorite = fetcher.formData

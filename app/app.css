@@ -264,11 +264,6 @@ i {
   transition-delay: 200ms;
 }
 
-#contact {
-  max-width: 40rem;
-  /* display: flex; */
-}
-
 #contact h1 {
   font-size: 2rem;
   font-weight: 700;
@@ -411,4 +406,43 @@ div:focus-visible {
 .metronome_bar_counter_current {
   font-weight: bold;
   background-color: #81D2C7;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 100px);
+  grid-template-rows: repeat(auto-fit, auto [section] 100px [bar] auto [state]);
+  grid-auto-flow: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.bar {
+  width: 100px;
+  height: 100px;
+  margin: 2px;
+  align-items: end;
+  justify-content: start;
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: span 3;
+}
+
+.bar p {
+  margin: 0;
+}
+
+.state-indicator {
+  text-align: center;
+}
+
+.before, .after {
+  background-color: #f7f7f7;
+  grid-row: 2;
+  width: 100px;
+  height: 100px;
+  display: block;
+  margin: 0;
+  text-align: center;
+  align-content: center;
 }

@@ -78,23 +78,24 @@ export function HydrateFallback() {
   return <p>Loading Metronome...</p>
 }
 
-
-const BeatsInBar = ({ style } : { style?: React.CSSProperties}) => (
-  <svg viewBox="0 0 32 32" style={style}>
-    <g stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
-      <g stroke="#416788" strokeWidth="2">
-        <g>
-          {/*  */}
-          <line x1="1" y1="0" x2="1" y2="32" />
-          <line x1="9" y1="16" x2="9" y2="32" />
-          <line x1="17" y1="16" x2="17" y2="32" />
-          <line x1="25" y1="16" x2="25" y2="32" />
-          <line x1="0" y1="16.5" x2="32" y2="16.5" />
-        </g>
-      </g>
+const BeatsInBar = ({ style, numberOfBeats, highlightedBeat } : { style?: React.CSSProperties, numberOfBeats: number, highlightedBeat: number }) => {
+  const firstVerticalLineStrokeColor = highlightedBeat === 0 ? '#81D2C7' : '#416788';
+  return <svg viewBox="0 0 32 32" style={style}>
+    <g stroke="none" strokeWidth="2" fill="none" fillRule="evenodd">
+        {/* Vertical Line */}
+        <line x1="1" y1="0" x2="1" y2="32" stroke={firstVerticalLineStrokeColor} />
+        {/* Center Horizontal Line */}
+        <line x1="0" y1="16.5" x2="32" y2="16.5" />
+        {/* Additional Lines */}
+        {Array(numberOfBeats - 1).fill(1).map((value, index) => {
+          const i = index + 1;
+          const x = 1 + i * 8 * 4 / numberOfBeats;
+          const stroke = (highlightedBeat) === i ? '#81D2C7' : '#416788';
+          return <line key={i} stroke={stroke} x1={x} y1="16" x2={x} y2="32" />
+        })}
     </g>
   </svg>
-);
+};
 
 export const MetronomeCounter = ({ song, selectBar }: { song: SongType, selectBar: (bar: BarType, index: number) => void }) => {
 
@@ -108,13 +109,16 @@ export const MetronomeCounter = ({ song, selectBar }: { song: SongType, selectBa
 
   if (song.bars) {
     let index = -1;
+    let barId = 0;
     for (let bar of song.bars) {
       index += 1;
       const isActive = (state.bar?.id ?? 0) == bar.id;
       const currentBar = Math.max(0, Math.floor((state.counter - state.totalCountUntilStartOfBar) / (state.numberOfBeats * state.numberOfSubBeats)));
-      const value = isActive ? '⬤' :'⭘';
 
       for (let i = 0; i < bar.numberOfBars; i++) {
+        const isActiveBarInBar = isActive && i === currentBar;
+        const value = isActiveBarInBar ? '⬤' :'⭘';
+        barId += 1;
         bars.push(
           <div
             key={`${index}-${i}`}
@@ -127,9 +131,12 @@ export const MetronomeCounter = ({ song, selectBar }: { song: SongType, selectBa
             {i === 0 ? <p style={{gridRow: '1', gridColumn: '1'}}>{bar.name}</p> : null}
             <BeatsInBar style={{
               gridRow: '2', gridColumn: '1',
-              backgroundColor: (isActive && i === currentBar) ? 'lightgray' : '',
-              }}/>
-            <p style={{gridRow: '3', gridColumn: '1'}}>{index}-{i} {value}</p>
+              backgroundColor: (isActiveBarInBar) ? 'lightgray' : '',
+              }}
+              numberOfBeats={bar.timeSignature}
+              highlightedBeat={isActiveBarInBar ? state.currentBeat : -1}
+              />
+            <p style={{gridRow: '3', gridColumn: '1'}}>{barId} {value}</p>
           </div>
         )
       }
@@ -255,10 +262,11 @@ function MetronomeCounterInternal(props: MetronomeCounterInternalProps) {
           }
         </div>
         { props.children }
+        {/* make these stay at the bottom of the page, everything above should scroll */}
         <div style={{ display: 'flex', justifyContent: 'center', margin: '2em' }}>
           <Beginning onClick={() => console.log('beginning')}/>
           <Back onClick={() => console.log('back')}/>
-          <Play onClick={props.startStopEvent}/>
+          <Play isPlaying={isPlaying} onClick={props.startStopEvent}/>
           <Forward onClick={() => console.log('forward')} />
           <End onClick={() => console.log('end')}/>
         </div>

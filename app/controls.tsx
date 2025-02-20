@@ -57,12 +57,11 @@ export const Forward = (props: {onClick: () => void}) => {
   )
 }
 
-export const Play = (props: {onClick: () => void}) => {
-  const [isPlaying, setIsPlaying] = useState(false);
+export const Play = (props: {isPlaying: boolean, onClick: () => void}) => {
   return (
-    <Button onClick={() => { setIsPlaying(!isPlaying); props.onClick() }}>
+    <Button onClick={() => { props.onClick() }}>
       {
-        isPlaying ?
+        props.isPlaying ?
           <img style={style} src={pauseSvg}></img> :
           <img style={style} src={playSvg}></img>
       }

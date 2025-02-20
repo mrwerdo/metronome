@@ -1,5 +1,5 @@
 import React from "react";
-import type { BarType } from "./data";
+import type { BarType } from "../data";
 import { Link } from "@remix-run/react";
 
 interface BarProps {

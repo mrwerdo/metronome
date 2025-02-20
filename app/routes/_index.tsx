@@ -1,4 +1,4 @@
-import { MetronomeStandalone } from "~/metronome";
+import { MetronomeStandalone } from "~/metronome/metronome";
 
 export default function Index() {
     return (

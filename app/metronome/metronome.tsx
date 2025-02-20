@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, createRef, KeyboardEvent } from "react";
 import { MetronomeState, useMetronomeState } from "./metronome_state";
-import { BarType, SongType } from "./data";
+import { BarType, SongType } from "../data";
 import { Beginning, Back, Play, Forward, End } from "./controls";
 
 // https://coolors.co/091540-7692ff-abd2fa-3d518c-1b2cc1
@@ -128,7 +128,9 @@ export const MetronomeCounter = ({ song, selectBar }: { song: SongType, selectBa
               selectBar(bar, i+1)
             }}
           >
+            {/* Section name above timeline. */}
             {i === 0 ? <p style={{gridRow: '1', gridColumn: '1'}}>{bar.name}</p> : null}
+            {/* Fancy vertical bars in timeline */}
             <BeatsInBar style={{
               gridRow: '2', gridColumn: '1',
               backgroundColor: (isActiveBarInBar) ? 'lightgray' : '',
@@ -136,6 +138,7 @@ export const MetronomeCounter = ({ song, selectBar }: { song: SongType, selectBa
               numberOfBeats={bar.timeSignature}
               highlightedBeat={isActiveBarInBar ? state.currentBeat : -1}
               />
+              {/* State indicators below timeline. */}
             <p style={{gridRow: '3', gridColumn: '1'}}>{barId} {value}</p>
           </div>
         )
@@ -155,8 +158,15 @@ export const MetronomeCounter = ({ song, selectBar }: { song: SongType, selectBa
       isPlaying={state.isPlaying ?? null}
     >
       <div className="grid-container">
-        <div className="bar">
-          <p className='before'>B</p>
+        <div className="bar"
+          onClick={(event) => {
+            event.stopPropagation();
+            state.setBar(song.bars[0], 0);
+          }}
+        >
+          <p style={{gridRow: '1', gridColumn: '1'}}>Above</p>
+          <p className="before" style={{gridRow: '2', gridColumn: '1'}}>B</p>
+          <p style={{gridRow: '3', gridColumn: '1'}}>Below</p>
         </div>
         { bars }
         <div className="bar">

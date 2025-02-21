@@ -97,12 +97,16 @@ const BeatsInBar = ({ style, numberOfBeats, highlightedBeat } : { style?: React.
   </svg>
 };
 
-export const MetronomeCounter = ({ song, selectBar }: { song: SongType, selectBar: (bar: BarType, index: number) => void }) => {
+export const MetronomeCounter = ({ song }: { song: SongType }) => {
 
   const state = useMetronomeState(song);
 
   const handleClick = () => {
     state.toggleIsPlaying();
+  }
+
+  const selectBar = (bar: BarType, barIndex: number) => {
+    state.setBar(bar, barIndex === -1 ? 0 : barIndex);
   }
 
   const bars: React.ReactNode[] = [];
@@ -118,6 +122,14 @@ export const MetronomeCounter = ({ song, selectBar }: { song: SongType, selectBa
       for (let i = 0; i < bar.numberOfBars; i++) {
         const isActiveBarInBar = isActive && i === currentBar;
         const value = isActiveBarInBar ? '⬤' :'⭘';
+        const style = {
+          gridRow: '2',
+          gridColumn: '1',
+          backgroundColor: 'white',
+        };
+        if (isActiveBarInBar) {
+          style['backgroundColor'] = 'lightgray';
+        }
         barId += 1;
         bars.push(
           <div
@@ -131,10 +143,7 @@ export const MetronomeCounter = ({ song, selectBar }: { song: SongType, selectBa
             {/* Section name above timeline. */}
             {i === 0 ? <p style={{gridRow: '1', gridColumn: '1'}}>{bar.name}</p> : null}
             {/* Fancy vertical bars in timeline */}
-            <BeatsInBar style={{
-              gridRow: '2', gridColumn: '1',
-              backgroundColor: (isActiveBarInBar) ? 'lightgray' : '',
-              }}
+            <BeatsInBar style={style}
               numberOfBeats={bar.timeSignature}
               highlightedBeat={isActiveBarInBar ? state.currentBeat : -1}
               />

@@ -124,8 +124,10 @@ export class MetronomeState {
       return;
     }
 
+
     this._totalCountUntilStartOfBar = this.song.bars.slice(0, index).reduce((acc, bar) => acc + (bar as BarRecord).numberOfBars * (bar as BarRecord).timeSignature * (bar as BarRecord).subBeats, 0);
     this._counter = this._totalCountUntilStartOfBar + (barIndex * bar.timeSignature * bar.subBeats) - 1;
+    console.log(`setting bar: ${bar.id}, ${bar.numberOfBars}, ${bar.subBeats}, ${barIndex}, ${this._totalCountUntilStartOfBar}, ${this._counter}`)
     this.updateVariables(0);
     this.updateUserInterface(this._counter);
   }

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 
-import backSvg from './assets/svgs/Controls/Back.svg';
-import beginningSvg from './assets/svgs/Controls/Beginning.svg';
-import endSvg from './assets/svgs/Controls/End.svg';
-import forwardSvg from './assets/svgs/Controls/Forward.svg';
-import pauseSvg from './assets/svgs/Controls/Pause.svg';
-import playSvg from './assets/svgs/Controls/Play.svg';
-import settingsSvg from './assets/svgs/Controls/Settings.svg';
+import backSvg from '~/assets/svgs/Controls/Back.svg';
+import beginningSvg from '~/assets/svgs/Controls/Beginning.svg';
+import endSvg from '~/assets/svgs/Controls/End.svg';
+import forwardSvg from '~/assets/svgs/Controls/Forward.svg';
+import pauseSvg from '~/assets/svgs/Controls/Pause.svg';
+import playSvg from '~/assets/svgs/Controls/Play.svg';
+import settingsSvg from '~/assets/svgs/Controls/Settings.svg';
 
 const style = { width: 50, height: 50 };
 

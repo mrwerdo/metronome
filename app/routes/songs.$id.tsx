@@ -65,10 +65,6 @@ export default function Songs() {
     metronome.setVolume(Number(event.target.value));
   };
 
-  const selectBar = (bar: BarType, barIndex: number) => {
-    metronome.setBar(bar, barIndex === -1 ? 0 : barIndex);
-  }
-
   return (
     <div id="contact">
       <div>
@@ -128,7 +124,7 @@ export default function Songs() {
           onChange={handleVolumeChange}
         />
       </div>
-      <MetronomeCounter song={song} selectBar={selectBar} />
+      <MetronomeCounter song={song} />
     </div>
   );
 }

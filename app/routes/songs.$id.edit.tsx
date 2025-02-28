@@ -2,10 +2,10 @@ import type {
     ActionFunctionArgs,
     LoaderFunctionArgs,
 } from "@remix-run/cloudflare";
-import { json, redirect } from "@remix-run/cloudflare";
-import { Form, Link, Outlet, useNavigate, useRouteLoaderData } from "@remix-run/react";
+import { json } from "@remix-run/cloudflare";
+import { Form, useNavigate, useRouteLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import { getSong, updateSong, BarMutation, addBar, SongType } from "../data";
+import { getSong, updateSong, SongType } from "../data";
 
 export const action = async ({
     params,
@@ -27,7 +27,7 @@ export const action = async ({
       song.instrument = formData.get('instrument')?.toString() ?? song.instrument;
       await updateSong(db, song.id, song);
     } else if (action === 'new-bar') {
-      song.bars = [
+      song.sections = [
         {
           id: 0,
           bpm: 120,
@@ -75,10 +75,10 @@ export default function EditBars() {
 
   const song = data.song;
 
-  if (song.bars === undefined) {
+  if (song.sections === undefined) {
     shouldShowNewButton = true;
   } else {
-    shouldShowNewButton = song.bars.length === 0
+    shouldShowNewButton = song.sections.length === 0
   }
 
   return (

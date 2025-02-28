@@ -2,7 +2,7 @@ import { Sampler, Loop, getTransport } from "tone";
 import studio_01 from "~/assets/tones/studio-01.mp3?url";
 import studio_02 from "~/assets/tones/studio-02.mp3?url";
 import coffee_shop from "~/assets/tones/coffee-shop.mp3?url";
-import { BarMutation, BarRecord, BarType, SongRecord } from "~/data";
+import { SectionMutation, SectionRecord, SectionType, SongRecord } from "~/data";
 import { TransportClass } from "tone/build/esm/core/clock/Transport";
 import { useSyncExternalStore } from "react";
 
@@ -41,7 +41,7 @@ const getSnapshotServerResult = {
   totalCountUntilStartOfBar: 0,
   bar: null,
   setVolume: (volume: number) => { },
-  setBar: (bar: BarType, barIndex: number) => { },
+  setBar: (bar: SectionType, barIndex: number) => { },
   toggleIsPlaying: () => { }
 };
 
@@ -73,8 +73,8 @@ export interface MetronomeStateSnapshot {
   isPlaying: boolean
   isLoaded: boolean
   totalCountUntilStartOfBar: number
-  bar: BarMutation | null
-  setBar(bar: BarType, barIndex: number): void
+  bar: SectionMutation | null
+  setBar(bar: SectionType, barIndex: number): void
   toggleIsPlaying: () => void
   setVolume(volume: number): void
 }
@@ -106,7 +106,7 @@ export class MetronomeState {
     bar: null,
     setVolume: (volume: number) => {
     },
-    setBar(bar: BarType, barIndex: number) {
+    setBar(bar: SectionType, barIndex: number) {
       this.setBar(bar, barIndex);
     },
     toggleIsPlaying: () => {
@@ -114,18 +114,18 @@ export class MetronomeState {
     }
   };
 
-  private setBar(bar: BarType, barIndex: number) {
-    if (this.song === null || this.song?.bars === undefined) {
+  private setBar(bar: SectionType, barIndex: number) {
+    if (this.song === null || this.song?.sections=== undefined) {
       return;
     }
 
-    const index = this.song.bars.indexOf(bar);
+    const index = this.song.sections.indexOf(bar);
     if (index === -1) {
       return;
     }
 
 
-    this._totalCountUntilStartOfBar = this.song.bars.slice(0, index).reduce((acc, bar) => acc + (bar as BarRecord).numberOfBars * (bar as BarRecord).timeSignature * (bar as BarRecord).subBeats, 0);
+    this._totalCountUntilStartOfBar = this.song.sections.slice(0, index).reduce((acc, bar) => acc + (bar as SectionRecord).numberOfBars * (bar as SectionRecord).timeSignature * (bar as SectionRecord).subBeats, 0);
     this._counter = this._totalCountUntilStartOfBar + (barIndex * bar.timeSignature * bar.subBeats) - 1;
     console.log(`setting bar: ${bar.id}, ${bar.numberOfBars}, ${bar.subBeats}, ${barIndex}, ${this._totalCountUntilStartOfBar}, ${this._counter}`)
     this.updateVariables(0);
@@ -253,15 +253,15 @@ export class MetronomeState {
     this.updateUserInterface(this._counter);
   }
 
-  private currentBar(): [BarMutation, number] | null {
-    if (this.song === null || this.song?.bars === undefined) {
+  private currentBar(): [SectionMutation, number] | null {
+    if (this.song === null || this.song?.sections === undefined) {
       return null;
     }
 
     let index = 0;
     let count = 0;
-    for (; index < this.song.bars.length; index += 1) {
-      const bar: BarRecord = this.song.bars[index] as BarRecord
+    for (; index < this.song.sections.length; index += 1) {
+      const bar: SectionRecord = this.song.sections[index] as SectionRecord
       const lengthOfBarInCounter = bar.numberOfBars * bar.timeSignature * bar.subBeats
       if (count <= this._counter && this._counter < count + lengthOfBarInCounter) {
         break;
@@ -270,11 +270,11 @@ export class MetronomeState {
       }
     }
 
-    if (index === this.song.bars.length) {
+    if (index === this.song.sections.length) {
       return null;
     }
 
-    return [this.song.bars[index], count];
+    return [this.song.sections[index], count];
   }
 
   private updateVariables(time: number): boolean {
@@ -359,7 +359,7 @@ export class MetronomeState {
       setVolume: (volume: number) => {
         this.setVolume(volume);
       },
-      setBar: (bar: BarType, barIndex: number) => {
+      setBar: (bar: SectionType, barIndex: number) => {
         this.setBar(bar, barIndex);
       },
       toggleIsPlaying: () => {

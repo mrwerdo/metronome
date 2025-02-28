@@ -5,7 +5,7 @@ import type {
 import { json, redirect } from "@remix-run/cloudflare";
 import { Form, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import { getSong, BarMutation, BarType, updateSong } from "../data";
+import { getSong, SectionMutation, SectionType, updateSong } from "../data";
 
 export const action = async ({
   params,
@@ -17,7 +17,7 @@ export const action = async ({
   const db = context.cloudflare.env.DB
   const formData = await request.formData();
   const action = formData.get('action');
-  const bar: BarType = {
+  const bar: SectionType = {
     id: parseInt(params.barId),
     bpm: parseInt(formData.get('bpm')?.toString() ?? '120'),
     delay: parseInt(formData.get('delay')?.toString() ?? '0'),
@@ -32,32 +32,32 @@ export const action = async ({
   if (song === null) {
     throw new Response("Song Not Found", { status: 404 })
   }
-  if (song.bars === undefined) {
+  if (song.sections === undefined) {
     throw new Response("No Bars Defined", { status: 404 });
   }
-  const index = song.bars.findIndex(value => value.id === bar.id)
+  const index = song.sections.findIndex(value => value.id === bar.id)
   if (index === -1) {
     throw new Response("Bar Not Found", { status: 404 });
   }
 
   if (action === 'save') {
-    song.bars[index] = bar
-    song.bars.every((value, index) => value.id = index)
+    song.sections[index] = bar
+    song.sections.every((value, index) => value.id = index)
   } else if (action === 'remove') {
-    song.bars.splice(index, 1);
-    song.bars.every((value, index) => value.id = index)
+    song.sections.splice(index, 1);
+    song.sections.every((value, index) => value.id = index)
     await updateSong(db, params.id, song);
-    if (song.bars.length === 0) {
+    if (song.sections.length === 0) {
       return redirect("/songs/" + params.id + "/edit");
     } else {
       return redirect("/songs/" + params.id + "/edit/bars/" + Math.max(0, (index - 1)));
     }
   } else if (action === 'add-before') {
-    song.bars.splice(index, 0, bar);
-    song.bars.every((value, index) => value.id = index)
+    song.sections.splice(index, 0, bar);
+    song.sections.every((value, index) => value.id = index)
   } else if (action === 'add-after') {
-    song.bars.splice(index + 1, 0, bar);
-    song.bars.forEach((value, index) => value.id = index)
+    song.sections.splice(index + 1, 0, bar);
+    song.sections.forEach((value, index) => value.id = index)
   }
 
   return await updateSong(db, params.id, song);
@@ -76,11 +76,11 @@ export const loader = async ({
     throw new Response("Not Found", { status: 404 });
   }
 
-  if (song.bars === null) {
+  if (song.sections === null) {
     throw new Response("Bars Not Found", { status: 404 });
   }
 
-  const bar = song.bars?.find((value) => value.id?.toString() === params.barId);
+  const bar = song.sections?.find((value) => value.id?.toString() === params.barId);
   if (bar === undefined) {
     throw new Response("Bar Not Found", { status: 404 });
   }
@@ -88,7 +88,7 @@ export const loader = async ({
   return json({ bar });
 };
 
-function BarForm({ bar }: { bar: BarMutation }) {
+function BarForm({ bar }: { bar: SectionMutation }) {
   return (
     <>
       <Form method="post">

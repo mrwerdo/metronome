@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, createRef, KeyboardEvent } from "react";
 import { MetronomeState, useMetronomeState } from "./metronome_state";
-import { BarType, SongType } from "../data";
+import { SectionType, SongType } from "../data";
 import { Beginning, Back, Play, Forward, End } from "./controls";
 
 // https://coolors.co/091540-7692ff-abd2fa-3d518c-1b2cc1
@@ -22,7 +22,7 @@ export const MetronomeStandalone = () => {
       favorite: false,
       instrument: 'unknown',
       name: 'Hidden',
-      bars: [
+      sections: [
         {
           id: 0,
           bpm: 120,
@@ -105,16 +105,16 @@ export const MetronomeCounter = ({ song }: { song: SongType }) => {
     state.toggleIsPlaying();
   }
 
-  const selectBar = (bar: BarType, barIndex: number) => {
+  const selectBar = (bar: SectionType, barIndex: number) => {
     state.setBar(bar, barIndex === -1 ? 0 : barIndex);
   }
 
   const bars: React.ReactNode[] = [];
 
-  if (song.bars) {
+  if (song.sections) {
     let index = -1;
     let barId = 0;
-    for (let bar of song.bars) {
+    for (let bar of song.sections) {
       index += 1;
       const isActive = (state.bar?.id ?? 0) == bar.id;
       const currentBar = Math.max(0, Math.floor((state.counter - state.totalCountUntilStartOfBar) / (state.numberOfBeats * state.numberOfSubBeats)));
@@ -170,7 +170,7 @@ export const MetronomeCounter = ({ song }: { song: SongType }) => {
         <div className="bar"
           onClick={(event) => {
             event.stopPropagation();
-            state.setBar(song.bars[0], 0);
+            state.setBar(song.sections[0], 0);
           }}
         >
           <p style={{gridRow: '1', gridColumn: '1'}}>Above</p>

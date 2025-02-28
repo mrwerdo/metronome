@@ -1,13 +1,13 @@
 import React from "react";
-import type { BarType } from "../data";
+import type { SectionType } from "../data";
 import { Link } from "@remix-run/react";
 
 interface BarProps {
-  bar: BarType;
+  bar: SectionType;
   isActive: boolean;
   // zero indexd, and which means that it will always be less than bar.numberOfBars
   currentBar: number;
-  didSelectBar: (bar: BarType, barIndex: number) => void;
+  didSelectBar: (bar: SectionType, barIndex: number) => void;
 }
 
 const Bar: React.FC<BarProps> = ({ bar, isActive, currentBar, didSelectBar }) => {

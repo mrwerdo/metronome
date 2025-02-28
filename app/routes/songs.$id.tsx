@@ -4,7 +4,7 @@ import { useState, type FunctionComponent } from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/cloudflare";
 import invariant from "tiny-invariant";
 import { getSong, setFavorite, updateSong } from "../data";
-import type { BarType, SongType } from "../data";
+import type { SongType } from "../data";
 import { MetronomeCounter } from "~/metronome/metronome";
 import { useMetronomeState } from "~/metronome/metronome_state";
 import { Settings } from '../metronome/controls';

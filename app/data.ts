@@ -13,7 +13,7 @@ import { D1Dialect } from "kysely-d1";
 import { songTypeSchema } from "./schema";
 
 
-export type BarMutation = {
+export type SectionMutation = {
   id?: number
   name?: string
   bpm?: number
@@ -23,7 +23,7 @@ export type BarMutation = {
   numberOfBars?: number
 }
 
-export type BarRecord = BarMutation & {
+export type SectionRecord = SectionMutation & {
   id: number,
   createdAt: string;
   name: string
@@ -39,16 +39,16 @@ export type SongMutation = {
   name?: string
   favorite?: boolean
   instrument?: string
-  bars?: Array<BarMutation>
+  sections?: Array<SectionMutation>
 }
 
 export type SongRecord = SongMutation & {
   id: string
   createdAt: string
-  // bars: Array<BarRecord>
+  // sections: Array<SectionRecord>
 }
 
-export type BarType = {
+export type SectionType = {
   id: number,
   name: string
   bpm: number
@@ -64,7 +64,7 @@ export type SongType = {
   favorite: boolean
   instrument: string
   createdAt: string
-  bars: Array<BarType>
+  sections: Array<SectionType>
 }
 
 function createKyselyDatabase(db: D1Database): Kysely<Database> {

@@ -1,5 +1,6 @@
 import { assert, expect, test } from 'vitest'
 import { Controller, Current, Section, Song } from './controller'
+import { extractRemixPluginContext } from '@remix-run/dev/dist/vite/plugin';
 
 function getSong() {
     const song = new Song({
@@ -50,6 +51,54 @@ test('song: updateStartOfSectionIndexes', () => {
     song.updateStartOfSectionIndexes();
     expect(song.sections[0].startOfSectionIndex).toBe(0);
     expect(song.sections[1].startOfSectionIndex).toBe(5 * 4 * 3);
+});
+
+test('song: indexNextBar', () => {
+    const song = getSong();
+    song.updateStartOfSectionIndexes();
+    const bar0 = song.indexAtCoordinates(0, 0, 0, 0);
+    const bar1 = song.indexAtCoordinates(0, 1, 0, 0);
+    expect(song.indexNextBar(bar0).counter).toBe(bar1.counter);
+});
+
+test('song: indexNextBeat', () => {
+    const song = getSong();
+    song.updateStartOfSectionIndexes();
+    const bar0 = song.indexAtCoordinates(0, 0, 0, 0);
+    const beat1 = song.indexAtCoordinates(0, 0, 1, 0);
+    expect(song.indexNextBeat(bar0).counter).toBe(beat1.counter);
+});
+
+test('song: indexNextSubBeat', () => {
+    const song = getSong();
+    song.updateStartOfSectionIndexes();
+    const bar0 = song.indexAtCoordinates(0, 0, 0, 0);
+    const subBeat1 = song.indexAtCoordinates(0, 0, 0, 1);
+    expect(song.indexNextSubBeat(bar0).counter).toBe(subBeat1.counter);
+});
+
+test('song: indexPreviousBar', () => {
+    const song = getSong();
+    song.updateStartOfSectionIndexes();
+    const bar0 = song.indexAtCoordinates(0, 0, 0, 0);
+    const bar1 = song.indexAtCoordinates(0, 1, 0, 0);
+    expect(song.indexPreviousBar(bar1).counter).toBe(bar0.counter);
+});
+
+test('song: indexPreviousBeat', () => {
+    const song = getSong();
+    song.updateStartOfSectionIndexes(); 
+    const bar0 = song.indexAtCoordinates(0, 0, 0, 0);
+    const beat1 = song.indexAtCoordinates(0, 0, 1, 0);
+    expect(song.indexPreviousBeat(beat1).counter).toBe(bar0.counter);
+});
+
+test('song: indexPreviousSubBeat', () => {
+    const song = getSong();
+    song.updateStartOfSectionIndexes();
+    const bar0 = song.indexAtCoordinates(0, 0, 0, 0);
+    const subBeat1 = song.indexAtCoordinates(0, 0, 0, 1);
+    expect(song.indexPreviousSubBeat(subBeat1).counter).toBe(bar0.counter);
 });
 
 test('controller: currentSection', () => {

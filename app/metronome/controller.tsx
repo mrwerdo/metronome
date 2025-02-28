@@ -125,9 +125,73 @@ export class Song implements SongType {
         return new Index(-1, -1, -1, -1, -1, -1, -1);
     }
 
+    public indexAtCoordinates(sectionIndex: number, barIndex: number, beatIndex: number, subBeatIndex: number): Index {
+        const section = this.sections[sectionIndex];
+        const counter = section.startOfSectionIndex + barIndex * section.numberOfBeats * section.numberOfSubBeats + beatIndex * section.numberOfSubBeats + subBeatIndex;
+        if (counter < section.startOfSectionIndex || counter >= section.startOfSectionIndex + section.lengthInTicks()) {
+            return new Index(-1, -1, -1, -1, -1, -1, -1);
+        }
+        return new Index(sectionIndex, barIndex, beatIndex, subBeatIndex, counter, section.startOfSectionIndex, section.lengthInTicks());
+    }
+
+    public indexNextSection(index: Index): Index {
+        if (index.counter === -1) {
+            return new Index(0, 0, 0, 0, 0, 0, 0);
+        }
+        if (index.bar === 0 && index.beat === 0 && index.subBeat === 0) {
+            if (index.section === this.sections.length - 1) {
+                return new Index(-1, -1, -1, -1, -1, -1, -1);
+            } else {
+                return this.indexGivenCounter(this.sections[index.section + 1].startOfSectionIndex);
+            }
+        } else {
+            return this.indexGivenCounter(index.sectionStartIndex + index.sectionLength);
+        }
+    }
+
     public indexNextBar(index: Index): Index {
         const section = this.sections[index.section];
         const counter = index.counter + section.numberOfBeats * section.numberOfSubBeats;
+        return this.indexGivenCounter(counter);
+    }
+
+    public indexNextBeat(index: Index): Index {
+        const section = this.sections[index.section];
+        const counter = index.counter + section.numberOfSubBeats;
+        return this.indexGivenCounter(counter);
+    }
+
+    public indexNextSubBeat(index: Index): Index {
+        const counter = index.counter + 1;
+        return this.indexGivenCounter(counter);
+    }
+
+    public indexPreviousSection(index: Index): Index {
+        if (index.bar === 0 && index.beat === 0 && index.subBeat === 0) {
+            if (index.section === 0) {
+                return this.indexGivenCounter(0);   
+            } else {
+                return this.indexGivenCounter(this.sections[index.section - 1].startOfSectionIndex);
+            }
+        } else {
+            return this.indexGivenCounter(index.sectionStartIndex);
+        }
+    }
+
+    public indexPreviousBar(index: Index): Index {
+        const section = this.sections[index.section];
+        const counter = index.counter - section.numberOfBeats * section.numberOfSubBeats;
+        return this.indexGivenCounter(counter);
+    }
+
+    public indexPreviousBeat(index: Index): Index {
+        const section = this.sections[index.section];
+        const counter = index.counter - section.numberOfSubBeats;
+        return this.indexGivenCounter(counter);
+    }
+
+    public indexPreviousSubBeat(index: Index): Index {
+        const counter = index.counter - 1;
         return this.indexGivenCounter(counter);
     }
 }
@@ -146,7 +210,15 @@ export class Controller {
     // 9. Given a bar, does it have any extra timing modifiers?
     // 10. I need to represent a count in vs no count in.
 
-    public counter: number = 0;
+    public get counter(): number {
+        return this.currentIndex.counter;
+    }
+
+    public set counter(_counter) {
+        this.currentIndex = this.song.indexGivenCounter(_counter);
+    }
+
+    currentIndex: Index;
     song: Song;
 
     private slowCurrentSectionAndBar(): [Section | null, number] {
@@ -164,8 +236,8 @@ export class Controller {
     }
 
     constructor(song: SongType) {
-        this.counter = 0;
         this.song = new Song(song);
+        this.currentIndex = new Index(0, 0, 0, 0, 0, 0, 0);
     }
 
     public currentSection(): Section | null {
@@ -225,14 +297,7 @@ export class Controller {
     }
 
     public nextSection(): number {
-        const current = this.currentSection();
-        if (current === null) {
-            return 0;
-        } else if (current === this.song.sections[this.song.sections.length - 1]) {
-            return -1;
-        } else {
-            return current.startOfSectionIndex + current.lengthInTicks();
-        }
+        return this.song.indexNextSection(this.currentIndex).counter;
     }
 
     public nextBar(): number {

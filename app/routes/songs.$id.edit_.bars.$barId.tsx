@@ -23,8 +23,8 @@ export const action = async ({
     delay: parseInt(formData.get('delay')?.toString() ?? '0'),
     name: formData.get('name')?.toString() ?? 'Default',
     numberOfBars: parseInt(formData.get('numberOfBars')?.toString() ?? '1'),
-    subBeats: parseInt(formData.get('subBeats')?.toString() ?? '1'),
-    timeSignature: parseInt(formData.get('timeSignatureNumerator')?.toString() ?? '4'),
+    numberOfSubBeats: parseInt(formData.get('subBeats')?.toString() ?? '1'),
+    numberOfBeats: parseInt(formData.get('timeSignatureNumerator')?.toString() ?? '4'),
   }
 
   const song = await getSong(db, params.id);
@@ -118,7 +118,7 @@ function BarForm({ bar }: { bar: SectionMutation }) {
             <input
               type="number"
               name="timeSignatureNumerator"
-              defaultValue={bar.timeSignature}
+              defaultValue={bar.numberOfBeats}
             />
           </label>
         </div>
@@ -126,7 +126,7 @@ function BarForm({ bar }: { bar: SectionMutation }) {
         <div>
           <label>
             Sub-Beats:
-            <input type="number" name="subBeats" defaultValue={bar.subBeats} />
+            <input type="number" name="subBeats" defaultValue={bar.numberOfSubBeats} />
           </label>
         </div>
 

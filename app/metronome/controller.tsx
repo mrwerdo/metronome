@@ -4,8 +4,8 @@ export class Section implements SectionType {
     id: number;
     name: string;
     bpm: number;
-    timeSignature: number;
-    subBeats: number;
+    numberOfBeats: number;
+    numberOfSubBeats: number;
     delay: number;
     numberOfBars: number;
     startOfSectionIndex: number = -1;
@@ -14,14 +14,14 @@ export class Section implements SectionType {
         this.id = section.id;
         this.name = section.name;
         this.bpm = section.bpm;
-        this.timeSignature = section.timeSignature;
-        this.subBeats = section.subBeats;
+        this.numberOfBeats = section.numberOfBeats;
+        this.numberOfSubBeats = section.numberOfSubBeats;
         this.delay = section.delay;
         this.numberOfBars = section.numberOfBars;
     }
 
     public lengthInTicks(): number {
-        return this.numberOfBars * this.timeSignature * this.subBeats;
+        return this.numberOfBars * this.numberOfBeats * this.numberOfSubBeats;
     }
 }
 
@@ -52,10 +52,30 @@ export class Current {
     
     public static fromCounterAndSection(counter: number, section: Section): Current {
         const counterRealtiveToSection = counter - section.startOfSectionIndex;
-        const currentBeat = (~~(counterRealtiveToSection / section.subBeats)) % section.timeSignature;
-        const currentSubBeat = counterRealtiveToSection % section.subBeats;
-        const currentBar = ~~(counterRealtiveToSection / (section.timeSignature * section.subBeats));
-        return new Current(currentBar, currentBeat, currentSubBeat, section.bpm, section.numberOfBars, section.timeSignature, section.subBeats);
+        const currentBeat = (~~(counterRealtiveToSection / section.numberOfSubBeats)) % section.numberOfBeats;
+        const currentSubBeat = counterRealtiveToSection % section.numberOfSubBeats;
+        const currentBar = ~~(counterRealtiveToSection / (section.numberOfBeats * section.numberOfSubBeats));
+        return new Current(currentBar, currentBeat, currentSubBeat, section.bpm, section.numberOfBars, section.numberOfBeats, section.numberOfSubBeats);
+    }
+}
+
+export class Index {
+    section: number;
+    bar: number;
+    beat: number;
+    subBeat: number;
+    counter: number;
+    sectionStartIndex: number;
+    sectionLength: number;
+    
+    public constructor(section: number, bar: number, beat: number, subBeat: number, counter: number, sectionStartIndex: number, sectionLength: number) {
+        this.section = section;
+        this.bar = bar;
+        this.beat = beat;
+        this.subBeat = subBeat;
+        this.counter = counter;
+        this.sectionStartIndex = sectionStartIndex;
+        this.sectionLength = sectionLength;
     }
 }
 
@@ -85,6 +105,30 @@ export class Song implements SongType {
             const length = section.lengthInTicks();
             count += length;
         }
+    }
+
+    public indexGivenCounter(counter: number): Index {
+        let count = 0;
+        for (let sectionIndex = 0; sectionIndex < this.sections.length; sectionIndex += 1) {
+            const section = this.sections[sectionIndex];
+            const length = section.lengthInTicks();
+            if (count <= counter && counter < count + length) {
+                const counterRealtiveToSection = counter - count;
+                const currentBeat = (~~(counterRealtiveToSection / section.numberOfSubBeats)) % section.numberOfBeats;
+                const currentSubBeat = counterRealtiveToSection % section.numberOfSubBeats;
+                const currentBar = ~~(counterRealtiveToSection / (section.numberOfBeats * section.numberOfSubBeats));
+                return new Index(sectionIndex, currentBar, currentBeat, currentSubBeat, counter, section.startOfSectionIndex, length);
+            } else {
+                count += length;
+            }
+        }
+        return new Index(-1, -1, -1, -1, -1, -1, -1);
+    }
+
+    public indexNextBar(index: Index): Index {
+        const section = this.sections[index.section];
+        const counter = index.counter + section.numberOfBeats * section.numberOfSubBeats;
+        return this.indexGivenCounter(counter);
     }
 }
 
@@ -152,8 +196,8 @@ export class Controller {
         return section.id == currentSection?.id
         && section.name == currentSection?.name
         && section.bpm == currentSection?.bpm
-        && section.timeSignature == currentSection?.timeSignature
-        && section.subBeats == currentSection?.subBeats
+        && section.numberOfBeats == currentSection?.numberOfBeats
+        && section.numberOfSubBeats == currentSection?.numberOfSubBeats
         && section.delay == currentSection?.delay
         && section.numberOfBars == currentSection?.numberOfBars;
     }
@@ -200,7 +244,7 @@ export class Controller {
             if (currentSection === this.song.sections[this.song.sections.length - 1] && current.currentBar === currentSection.numberOfBars - 1) {
                 return -1;
             }
-            return currentSection.startOfSectionIndex + (current.currentBar + 1) * currentSection.timeSignature * currentSection.subBeats;
+            return currentSection.startOfSectionIndex + (current.currentBar + 1) * currentSection.numberOfBeats * currentSection.numberOfSubBeats;
         }
     }
 
@@ -210,7 +254,7 @@ export class Controller {
         if (current === null || currentSection === null) {
             return 0;
         } else {
-            if (currentSection === this.song.sections[this.song.sections.length - 1] && current.currentBar === currentSection.numberOfBars - 1 && current.currentBeat === currentSection.timeSignature - 1) {
+            if (currentSection === this.song.sections[this.song.sections.length - 1] && current.currentBar === currentSection.numberOfBars - 1 && current.currentBeat === currentSection.numberOfBeats - 1) {
                 return -1;
             }
             return currentSection.startOfSectionIndex + current.numberOfBars * current.numberOfBeats * current.numberOfSubBeats;
@@ -269,9 +313,9 @@ export class Controller {
                 if (previousSection === null) {
                     return 0;
                 }
-                return previousSection.startOfSectionIndex + (previousSection.numberOfBars - 1) * previousSection.timeSignature * previousSection.subBeats;
+                return previousSection.startOfSectionIndex + (previousSection.numberOfBars - 1) * previousSection.numberOfBeats * previousSection.numberOfSubBeats;
             } else {
-                return currentSection.startOfSectionIndex + (current.currentBar - 1) * currentSection.timeSignature * currentSection.subBeats;
+                return currentSection.startOfSectionIndex + (current.currentBar - 1) * currentSection.numberOfBeats * currentSection.numberOfSubBeats;
             }
         }
     }
@@ -287,7 +331,7 @@ export class Controller {
                 if (previousSection === null) {
                     return 0;
                 }
-                return previousSection.startOfSectionIndex + (previousSection.numberOfBars - 1) * previousSection.timeSignature * previousSection.subBeats + (previousSection.timeSignature - 1) * previousSection.subBeats;
+                return previousSection.startOfSectionIndex + (previousSection.numberOfBars - 1) * previousSection.numberOfBeats * previousSection.numberOfSubBeats + (previousSection.numberOfBeats - 1) * previousSection.numberOfSubBeats;
             } else {
                 if (current.currentSubBeat > 0) {
                     return this.counter - current.currentSubBeat;

@@ -17,8 +17,8 @@ export type SectionMutation = {
   id?: number
   name?: string
   bpm?: number
-  timeSignature?: number
-  subBeats?: number
+  numberOfBeats?: number
+  numberOfSubBeats?: number
   delay?: number
   numberOfBars?: number
 }
@@ -28,8 +28,8 @@ export type SectionRecord = SectionMutation & {
   createdAt: string;
   name: string
   bpm: number
-  timeSignature: number
-  subBeats: number
+  numberOfBeats: number
+  numberOfSubBeats: number
   delay: number
   numberOfBars: number
 }
@@ -52,8 +52,8 @@ export type SectionType = {
   id: number,
   name: string
   bpm: number
-  timeSignature: number
-  subBeats: number
+  numberOfBeats: number
+  numberOfSubBeats: number
   delay: number
   numberOfBars: number
 }

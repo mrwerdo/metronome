@@ -29,8 +29,8 @@ export const MetronomeStandalone = () => {
           delay: 0,
           name: 'Hidden',
           numberOfBars: 9999,
-          subBeats: 1,
-          timeSignature: 4
+          numberOfSubBeats: 1,
+          numberOfBeats: 4
         }
       ]
     }
@@ -144,7 +144,7 @@ export const MetronomeCounter = ({ song }: { song: SongType }) => {
             {i === 0 ? <p style={{gridRow: '1', gridColumn: '1'}}>{bar.name}</p> : null}
             {/* Fancy vertical bars in timeline */}
             <BeatsInBar style={style}
-              numberOfBeats={bar.timeSignature}
+              numberOfBeats={bar.numberOfBeats}
               highlightedBeat={isActiveBarInBar ? state.currentBeat : -1}
               />
               {/* State indicators below timeline. */}

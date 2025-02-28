@@ -125,9 +125,9 @@ export class MetronomeState {
     }
 
 
-    this._totalCountUntilStartOfBar = this.song.sections.slice(0, index).reduce((acc, bar) => acc + (bar as SectionRecord).numberOfBars * (bar as SectionRecord).timeSignature * (bar as SectionRecord).subBeats, 0);
-    this._counter = this._totalCountUntilStartOfBar + (barIndex * bar.timeSignature * bar.subBeats) - 1;
-    console.log(`setting bar: ${bar.id}, ${bar.numberOfBars}, ${bar.subBeats}, ${barIndex}, ${this._totalCountUntilStartOfBar}, ${this._counter}`)
+    this._totalCountUntilStartOfBar = this.song.sections.slice(0, index).reduce((acc, bar) => acc + (bar as SectionRecord).numberOfBars * (bar as SectionRecord).numberOfBeats * (bar as SectionRecord).numberOfSubBeats, 0);
+    this._counter = this._totalCountUntilStartOfBar + (barIndex * bar.numberOfBeats * bar.numberOfSubBeats) - 1;
+    console.log(`setting bar: ${bar.id}, ${bar.numberOfBars}, ${bar.numberOfSubBeats}, ${barIndex}, ${this._totalCountUntilStartOfBar}, ${this._counter}`)
     this.updateVariables(0);
     this.updateUserInterface(this._counter);
   }
@@ -262,7 +262,7 @@ export class MetronomeState {
     let count = 0;
     for (; index < this.song.sections.length; index += 1) {
       const bar: SectionRecord = this.song.sections[index] as SectionRecord
-      const lengthOfBarInCounter = bar.numberOfBars * bar.timeSignature * bar.subBeats
+      const lengthOfBarInCounter = bar.numberOfBars * bar.numberOfBeats * bar.numberOfSubBeats
       if (count <= this._counter && this._counter < count + lengthOfBarInCounter) {
         break;
       } else {
@@ -292,8 +292,8 @@ export class MetronomeState {
     }
 
     this._totalCountUntilStartOfBar = count;
-    this._numberOfBeats = bar.timeSignature ?? 0;
-    this._numberOfSubBeats = bar.subBeats ?? 0;
+    this._numberOfBeats = bar.numberOfBeats ?? 0;
+    this._numberOfSubBeats = bar.numberOfSubBeats ?? 0;
     try {
       // Adjust BPM to apply to the beat instead of the subbeat
       this.transport.bpm.setValueAtTime((bar.bpm ?? 0) * this._numberOfSubBeats, time);

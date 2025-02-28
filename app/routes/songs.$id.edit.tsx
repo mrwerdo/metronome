@@ -34,8 +34,8 @@ export const action = async ({
           delay: 0,
           name: 'Section 1',
           numberOfBars: 10,
-          subBeats: 1,
-          timeSignature: 4
+          numberOfSubBeats: 1,
+          numberOfBeats: 4
         }
       ]
       await updateSong(db, song.id, song);

@@ -13,8 +13,8 @@ function getSong() {
                 id: 1,
                 name: 'A',
                 bpm: 120,
-                timeSignature: 5,
-                subBeats: 4,
+                numberOfBeats: 5,
+                numberOfSubBeats: 4,
                 delay: 0,
                 numberOfBars: 3,
             },
@@ -22,8 +22,8 @@ function getSong() {
                 id: 2,
                 name: 'B',
                 bpm: 120,
-                timeSignature: 4,
-                subBeats: 4,
+                numberOfBeats: 4,
+                numberOfSubBeats: 4,
                 delay: 0,
                 numberOfBars: 4,
             }
@@ -37,8 +37,8 @@ test('section: length = bars * beats * subBeats', () => {
         id: 1,
         name: 'test',
         bpm: 120,
-        timeSignature: 4,
-        subBeats: 4,
+        numberOfBeats: 4,
+        numberOfSubBeats: 4,
         delay: 0,
         numberOfBars: 4,
     });
@@ -72,8 +72,8 @@ test('controller: current bar start of song', () => {
     controller.counter = 0;
     const result = controller.current();
     assert(result);
-    expect(result.numberOfBeats).toBe(song.sections[0].timeSignature);
-    expect(result.numberOfSubBeats).toBe(song.sections[0].subBeats);
+    expect(result.numberOfBeats).toBe(song.sections[0].numberOfBeats);
+    expect(result.numberOfSubBeats).toBe(song.sections[0].numberOfSubBeats);
     expect(result.beatsPerMinute).toBe(song.sections[0].bpm);
     expect(result.currentBeat).toBe(0);
 });
@@ -84,8 +84,8 @@ test('controller: current bar part way through section', () => {
     controller.counter = 5;
     const result = controller.current();
     assert(result);
-    expect(result.numberOfBeats).toBe(song.sections[0].timeSignature);
-    expect(result.numberOfSubBeats).toBe(song.sections[0].subBeats);
+    expect(result.numberOfBeats).toBe(song.sections[0].numberOfBeats);
+    expect(result.numberOfSubBeats).toBe(song.sections[0].numberOfSubBeats);
     expect(result.beatsPerMinute).toBe(song.sections[0].bpm);
     expect(result.currentBeat).toBe(1);
 });
@@ -96,8 +96,8 @@ test('controller: current bar between first and second section', () => {
     controller.counter = song.sections[0].lengthInTicks() + 1;
     const result = controller.current();
     assert(result);
-    expect(result.numberOfBeats).toBe(song.sections[1].timeSignature);
-    expect(result.numberOfSubBeats).toBe(song.sections[1].subBeats);
+    expect(result.numberOfBeats).toBe(song.sections[1].numberOfBeats);
+    expect(result.numberOfSubBeats).toBe(song.sections[1].numberOfSubBeats);
     expect(result.beatsPerMinute).toBe(song.sections[1].bpm);
     expect(result.currentBeat).toBe(0);
 });
@@ -319,8 +319,8 @@ test('controller: previousSection at beginning of section C goes to section B', 
                 id: 1,
                 name: 'A',
                 bpm: 120,
-                timeSignature: 5,
-                subBeats: 4,
+                numberOfBeats: 5,
+                numberOfSubBeats: 4,
                 delay: 0,
                 numberOfBars: 3,
             },
@@ -328,8 +328,8 @@ test('controller: previousSection at beginning of section C goes to section B', 
                 id: 2,
                 name: 'B',
                 bpm: 120,
-                timeSignature: 4,
-                subBeats: 4,
+                numberOfBeats: 4,
+                numberOfSubBeats: 4,
                 delay: 0,
                 numberOfBars: 4,
             },
@@ -337,8 +337,8 @@ test('controller: previousSection at beginning of section C goes to section B', 
                 id: 3,
                 name: 'C',
                 bpm: 120,
-                timeSignature: 5,
-                subBeats: 5,
+                numberOfBeats: 5,
+                numberOfSubBeats: 5,
                 delay: 0,
                 numberOfBars: 5,
             }
@@ -368,7 +368,7 @@ test('controller: previousBar at beginning of section B goes to section A last b
     const song = getSong();
     const controller = new Controller(song);
     controller.counter = song.sections[0].lengthInTicks();
-    expect(controller.previousBar()).toBe(song.sections[0].lengthInTicks() - song.sections[0].timeSignature * song.sections[0].subBeats);
+    expect(controller.previousBar()).toBe(song.sections[0].lengthInTicks() - song.sections[0].numberOfBeats * song.sections[0].numberOfSubBeats);
 });
 
 test('controller: previousBar in bar 3 of section B goes to bar 2 of section B', () => {
@@ -390,8 +390,8 @@ test('controller: previousBar at beginning of section C goes to section B', () =
                 id: 1,
                 name: 'A',
                 bpm: 120,
-                timeSignature: 5,
-                subBeats: 4,
+                numberOfBeats: 5,
+                numberOfSubBeats: 4,
                 delay: 0,
                 numberOfBars: 3,
             },
@@ -399,8 +399,8 @@ test('controller: previousBar at beginning of section C goes to section B', () =
                 id: 2,
                 name: 'B',
                 bpm: 120,
-                timeSignature: 4,
-                subBeats: 4,
+                numberOfBeats: 4,
+                numberOfSubBeats: 4,
                 delay: 0,
                 numberOfBars: 4,
             },
@@ -408,8 +408,8 @@ test('controller: previousBar at beginning of section C goes to section B', () =
                 id: 3,
                 name: 'C',
                 bpm: 120,
-                timeSignature: 5,
-                subBeats: 5,
+                numberOfBeats: 5,
+                numberOfSubBeats: 5,
                 delay: 0,
                 numberOfBars: 5,
             }
@@ -445,5 +445,5 @@ test('controller: previousBeat at beginning of section B goes to section A last 
     const song = getSong();
     const controller = new Controller(song);
     controller.counter = song.sections[0].lengthInTicks();
-    expect(controller.previousBeat()).toBe(song.sections[0].lengthInTicks() - song.sections[0].subBeats);
+    expect(controller.previousBeat()).toBe(song.sections[0].lengthInTicks() - song.sections[0].numberOfSubBeats);
 });

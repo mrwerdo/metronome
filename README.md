@@ -53,6 +53,13 @@ FROM Songs S
 JOIN Bars B ON S.id = B.songId;"
 ```
 
+## Tests
+
+To run tests:
+```sh
+npm run test
+```
+
 ## Typegen
 
 Generate types for your Cloudflare bindings in `wrangler.toml`:
@@ -62,6 +69,12 @@ npm run typegen
 ```
 
 You will need to rerun typegen whenever you make changes to `wrangler.toml`.
+
+To generate API validations with Zod, you'll need to run:
+
+```sh
+npm run schema
+```
 
 ## Deployment
 
@@ -89,3 +102,4 @@ npm run deploy
 - [ts-to-zod](https://github.com/fabien0102/ts-to-zod)
 - [zod](https://github.com/colinhacks/zod)
 - [Remix Icons](https://remixicon.com)
+- [Vitest](https://vitest.dev/guide/)

@@ -39,7 +39,7 @@ export const MetronomeStandalone = () => {
     state.setVolume(Number(event.target.value));
   };
 
-  const section = state.controller.song.sections[state.index.section];
+  const section = state.song.sections[state.index.section];
 
   return <>
     <MetronomeCounterInternal
@@ -112,9 +112,9 @@ export const MetronomeCounter = ({ song }: { song: SongType }) => {
 
   const bars: React.ReactNode[] = [];
 
-  let index = state.controller.song.firstIndex();
+  let index = state.song.firstIndex();
   while (index.counter != -1) {
-    const section = state.controller.song.sections[index.section];
+    const section = state.song.sections[index.section];
     const sectionActiveIndicator = state.index.isSameSection(index) ? '⬤' : '⭘';
     const isSameBar = state.index.isSameBar(index);
     const i = index; // javascript copies references to variables, not the actual value.
@@ -128,10 +128,10 @@ export const MetronomeCounter = ({ song }: { song: SongType }) => {
       </div>
     )
 
-    index = state.controller.song.indexNextBar(index);
+    index = state.song.indexNextBar(index);
   }
 
-  const currentSection = state.controller.song.sections[state.index.section];
+  const currentSection = state.song.sections[state.index.section];
 
   return <>
     <MetronomeCounterInternal
@@ -148,7 +148,7 @@ export const MetronomeCounter = ({ song }: { song: SongType }) => {
         <div className="bar"
           onClick={(event) => {
             event.stopPropagation();
-            state.setIndex(state.controller.song.firstIndex());
+            state.setIndex(state.song.firstIndex());
           }}
         >
           <p style={{gridRow: '1', gridColumn: '1'}}>Above</p>

@@ -1,6 +1,5 @@
 import { assert, expect, test } from 'vitest'
 import { Controller, Current, Section, Song } from './controller'
-import { extractRemixPluginContext } from '@remix-run/dev/dist/vite/plugin';
 
 function getSong() {
     const song = new Song({

@@ -5,14 +5,14 @@ import coffee_shop from "~/assets/tones/coffee-shop.mp3?url";
 import { SongType } from "~/data";
 import { TransportClass } from "tone/build/esm/core/clock/Transport";
 import { useEffect, useSyncExternalStore } from "react";
-import { Index, Song } from "./controller";
+import { Controller, Index, Song } from "./controller";
 
 export interface MetronomeStateSnapshot {
   index: Index
   isPlaying: boolean
   isLoaded: boolean
   metronome: MetronomeDevice | null;
-  song: Song,
+  controller: Controller;
   setIndex(index: Index): void
   toggleIsPlaying: () => void
   setVolume(volume: number): void
@@ -23,20 +23,20 @@ class _State implements MetronomeStateSnapshot {
   public isPlaying: boolean
   public isLoaded: boolean
   public metronome: MetronomeDevice | null;
-  public song: Song;
+  public controller: Controller;
 
   constructor(
     index: Index,
     isPlaying: boolean,
     isLoaded: boolean,
     metronome: MetronomeDevice | null,
-    song: Song,
+    controller: Controller,
   ) {
     this.index = index;
     this.isPlaying = isPlaying;
     this.isLoaded = isLoaded;
     this.metronome = metronome;
-    this.song = song;
+    this.controller = controller;
   }
 
   public setIndex(index: Index) {
@@ -87,8 +87,8 @@ export function useMetronomeState(song: SongType): MetronomeStateSnapshot {
     if (song.id in stateCache) {
       return stateCache[song.id];
     } else {
-      const s = new Song(song);
-      stateCache[song.id] = new _State(s.firstIndex(), false, false, null, s);
+      const controller = new Controller(song);
+      stateCache[song.id] = new _State(controller.song.firstIndex(), false, false, null, controller);
       return stateCache[song.id];
     }
   });
@@ -102,7 +102,11 @@ class MetronomeDevice {
   private transport: TransportClass
   private loop: Loop
   private sampler: Sampler
-  private song: Song
+  private controller: Controller
+
+  private get song(): Song {
+    return this.controller.song;
+  }
 
   private get isPlaying(): boolean {
     if (this.transport.state === "started") {
@@ -113,7 +117,7 @@ class MetronomeDevice {
   }
 
   constructor(song: SongType) {
-    this.song = new Song(song);
+    this.controller = new Controller(song);
     this.isLoaded = false
     this.index = this.song.firstIndex();
     this.transport = getTransport();
@@ -141,7 +145,7 @@ class MetronomeDevice {
       this.isPlaying,
       this.isLoaded,
       this,
-      this.song,
+      this.controller,
     );
 
     this.updateVariables(0);
@@ -181,7 +185,7 @@ class MetronomeDevice {
       this.isPlaying,
       this.isLoaded,
       this,
-      this.song,
+      this.controller,
     );
 
     for (const subscriberCallback of this.listeners) {
@@ -196,7 +200,7 @@ class MetronomeDevice {
   }
 
   public setSong(song: SongType) {
-    this.song = new Song(song);
+    this.controller.song = new Song(song);
     this.index = this.song.firstIndex();
     this.updateUserInterface();
   }

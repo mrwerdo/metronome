@@ -107,7 +107,6 @@ export const MetronomeCounter = ({ song }: { song: SongType }) => {
 
   const setIndex = (event: React.MouseEvent<HTMLDivElement>, index: Index) => {
     event.stopPropagation();
-    console.log(index);
     state.setIndex(index);
   };
 
@@ -149,8 +148,7 @@ export const MetronomeCounter = ({ song }: { song: SongType }) => {
         <div className="bar"
           onClick={(event) => {
             event.stopPropagation();
-            console.log('first bar');
-            state.metronome?.setIndex(state.metronome.controller.song.firstIndex());
+            state.setIndex(state.controller.song.firstIndex());
           }}
         >
           <p style={{gridRow: '1', gridColumn: '1'}}>Above</p>

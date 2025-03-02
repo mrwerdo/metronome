@@ -6,7 +6,7 @@ import invariant from "tiny-invariant";
 import { getSong, setFavorite, updateSong } from "../data";
 import type { SongType } from "../data";
 import { MetronomeCounter } from "~/metronome/metronome";
-import { useMetronomeState } from "~/metronome/metronome_state";
+import { useMetronomeState } from "~/metronome/useMetronomeState";
 import { Settings } from '../metronome/controls';
 
 export const loader = async ({

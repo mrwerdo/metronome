@@ -1,5 +1,5 @@
 import React, { useEffect, createRef, KeyboardEvent } from "react";
-import { useMetronomeState } from "./metronome_state";
+import { useMetronomeState } from "./useMetronomeState";
 import { SongType } from "../data";
 import { Beginning, Back, Play, Forward, End } from "./controls";
 import { Index } from "./controller";

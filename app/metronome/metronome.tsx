@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect, createRef, KeyboardEvent } from "react";
-import { MetronomeState, useMetronomeState } from "./metronome_state";
+import React, { useEffect, createRef, KeyboardEvent } from "react";
+import { useMetronomeState } from "./metronome_state";
 import { SongType } from "../data";
 import { Beginning, Back, Play, Forward, End } from "./controls";
 import { Index } from "./controller";
@@ -10,55 +10,47 @@ import { Index } from "./controller";
 // #ABD2FA
 // #3D518C
 // #1B2CC1
+const veryLongSong: SongType = {
+    id: '0',
+    createdAt: '2024-08-20 16:06:00T1000',
+    favorite: false,
+    instrument: 'unknown',
+    name: 'Hidden',
+    sections: [
+      {
+        id: 0,
+        bpm: 120,
+        delay: 0,
+        name: 'Hidden',
+        numberOfBars: 9999,
+        numberOfSubBeats: 1,
+        numberOfBeats: 4
+      }
+    ]
+  }
 
 export const MetronomeStandalone = () => {
-  const [counter, setCounter] = useState(0);
-  const [isLoaded, setLoaded] = useState(false);
-  const [volume, setVolume] = useState(10);
-  const state = useRef<MetronomeState | null>(null)
-  useEffect(() => {
-    const song: SongType = {
-      id: '0',
-      createdAt: '2024-08-20 16:06:00T1000',
-      favorite: false,
-      instrument: 'unknown',
-      name: 'Hidden',
-      sections: [
-        {
-          id: 0,
-          bpm: 120,
-          delay: 0,
-          name: 'Hidden',
-          numberOfBars: 9999,
-          numberOfSubBeats: 1,
-          numberOfBeats: 4
-        }
-      ]
-    }
-    state.current = new MetronomeState(song);
-    return () => {
-      state.current?.stop()
-    }
-  }, [])
+  const state = useMetronomeState(veryLongSong);
   const handleClick = () => {
-    state.current?.toggleIsPlaying();
+    state.toggleIsPlaying();
   }
 
   const handleVolumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setVolume(Number(event.target.value));
-    state.current?.setVolume(Number(event.target.value));
+    state.setVolume(Number(event.target.value));
   };
+
+  const section = state.controller.song.sections[state.index.section];
 
   return <>
     <MetronomeCounterInternal
       startStopEvent={handleClick}
-      counter={state.current?.counter ?? 0}
-      isLoaded={isLoaded}
-      numberOfBeats={state.current?.numberOfBeats ?? null}
-      numberOfSubBeats={state.current?.numberOfSubBeats ?? null}
-      currentBeat={state.current?.currentBeat ?? null}
-      currentSubBeat={state.current?.currentSubBeat ?? null}
-      isPlaying={state.current?.isPlaying ?? null}
+      counter={state.index.counter ?? 0}
+      isLoaded={state.isLoaded}
+      numberOfBeats={section.numberOfBeats ?? null}
+      numberOfSubBeats={section.numberOfSubBeats ?? null}
+      currentBeat={state.index.beat ?? null}
+      currentSubBeat={state.index.subBeat ?? null}
+      isPlaying={state.isPlaying ?? null}
     />
     <div>
       <label htmlFor="volume">Volume: </label>
@@ -68,7 +60,6 @@ export const MetronomeStandalone = () => {
         name="volume"
         min="0"
         max="20"
-        value={volume}
         onChange={handleVolumeChange}
       />
     </div>
@@ -79,14 +70,14 @@ export function HydrateFallback() {
   return <p>Loading Metronome...</p>
 }
 
-const BeatsInBar = ({ isHighlightedBar: isSameBar, numberOfBeats, isHighlightedBeat: highlightedBeat } : { isHighlightedBar: boolean, numberOfBeats: number, isHighlightedBeat: number }) => {
-  const firstVerticalLineStrokeColor = highlightedBeat === 0 ? '#81D2C7' : '#416788';
+const BeatsInBar = ({ isHighlightedBar, isHighlightedBeat, numberOfBeats } : { isHighlightedBar: boolean, isHighlightedBeat: number, numberOfBeats: number, }) => {
+  const firstVerticalLineStrokeColor = isHighlightedBeat === 0 ? '#81D2C7' : '#416788';
   const style = {
     gridRow: '2',
     gridColumn: '1',
     backgroundColor: 'white',
   };
-  if (isSameBar) {
+  if (isHighlightedBar) {
     style['backgroundColor'] = 'lightgray';
   }
   return <svg viewBox="0 0 32 32" style={style}>
@@ -99,7 +90,7 @@ const BeatsInBar = ({ isHighlightedBar: isSameBar, numberOfBeats, isHighlightedB
         {Array(numberOfBeats - 1).fill(1).map((value, index) => {
           const i = index + 1;
           const x = 1 + i * 8 * 4 / numberOfBeats;
-          const stroke = (highlightedBeat) === i ? '#81D2C7' : '#416788';
+          const stroke = (isHighlightedBeat) === i ? '#81D2C7' : '#416788';
           return <line key={i} stroke={stroke} x1={x} y1="16" x2={x} y2="32" />
         })}
     </g>
@@ -122,28 +113,26 @@ export const MetronomeCounter = ({ song }: { song: SongType }) => {
 
   const bars: React.ReactNode[] = [];
 
-  if (state.metronome !== null) {
-    let index = state.metronome.controller.song.firstIndex();
-    while (index.counter != -1) {
-      const section = state.metronome.controller.song.sections[index.section];
-      const sectionActiveIndicator = state.index.isSameSection(index) ? '⬤' : '⭘';
-      const isSameBar = state.index.isSameBar(index);
-      const i = index; // javascript copies references to variables, not the actual value.
-      bars.push(
-        <div key={index.counter} className="bar" onClick={event => setIndex(event, i)}>
-              {index.bar === 0 ? <p style={{gridRow: '1', gridColumn: '1'}}>{section.name}</p> : null}
-              {/* Fancy vertical bars in timeline */}
-              <BeatsInBar isHighlightedBar={isSameBar} isHighlightedBeat={isSameBar ? state.index.beat : -1} numberOfBeats={section.numberOfBeats} />
-                {/* State indicators below timeline. */}
-              <p style={{gridRow: '3', gridColumn: '1'}}>{index.section} {sectionActiveIndicator}</p>
-        </div>
-      )
+  let index = state.controller.song.firstIndex();
+  while (index.counter != -1) {
+    const section = state.controller.song.sections[index.section];
+    const sectionActiveIndicator = state.index.isSameSection(index) ? '⬤' : '⭘';
+    const isSameBar = state.index.isSameBar(index);
+    const i = index; // javascript copies references to variables, not the actual value.
+    bars.push(
+      <div key={index.counter} className="bar" onClick={event => setIndex(event, i)}>
+            {index.bar === 0 ? <p style={{gridRow: '1', gridColumn: '1'}}>{section.name}</p> : null}
+            {/* Fancy vertical bars in timeline */}
+            <BeatsInBar isHighlightedBar={isSameBar} isHighlightedBeat={isSameBar ? state.index.beat : -1} numberOfBeats={section.numberOfBeats} />
+            {/* State indicators below timeline. */}
+            <p style={{gridRow: '3', gridColumn: '1'}}>{index.section} {sectionActiveIndicator}</p>
+      </div>
+    )
 
-      index = state.metronome.controller.song.indexNextBar(index);
-    }
+    index = state.controller.song.indexNextBar(index);
   }
 
-  const currentSection = state.metronome?.controller.song.sections[state.index.section];
+  const currentSection = state.controller.song.sections[state.index.section];
 
   return <>
     <MetronomeCounterInternal

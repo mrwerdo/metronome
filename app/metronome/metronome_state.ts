@@ -4,17 +4,15 @@ import studio_02 from "~/assets/tones/studio-02.mp3?url";
 import coffee_shop from "~/assets/tones/coffee-shop.mp3?url";
 import { SongType } from "~/data";
 import { TransportClass } from "tone/build/esm/core/clock/Transport";
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { Controller, Index, Song } from "./controller";
-
-let externalMetronomeState: MetronomeState | null;
-let stateCache: { [key: string]: _State } = {};
 
 export interface MetronomeStateSnapshot {
   index: Index
   isPlaying: boolean
   isLoaded: boolean
-  metronome: MetronomeState | null;
+  metronome: MetronomeDevice | null;
+  controller: Controller;
   setIndex(index: Index): void
   toggleIsPlaying: () => void
   setVolume(volume: number): void
@@ -24,14 +22,14 @@ class _State implements MetronomeStateSnapshot {
   public index: Index
   public isPlaying: boolean
   public isLoaded: boolean
-  public metronome: MetronomeState | null;
+  public metronome: MetronomeDevice | null;
   public controller: Controller;
 
   constructor(
     index: Index,
     isPlaying: boolean,
     isLoaded: boolean,
-    metronome: MetronomeState | null,
+    metronome: MetronomeDevice | null,
     controller: Controller,
   ) {
     this.index = index;
@@ -54,34 +52,32 @@ class _State implements MetronomeStateSnapshot {
   }
 }
 
-function subscribe(): ((callback: () => void) => (() => void)) {
-  if (externalMetronomeState !== null && externalMetronomeState !== undefined) {
-    return externalMetronomeState?.subscribe.bind(externalMetronomeState);
-  } else {
-    console.log('Assuming server side rendering.');
-    externalMetronomeState = null;
-    return (callback: () => void) => {
-      return () => {
-        // cleanup is not necessary
-      };
-    };
-  }
-}
+let externalMetronomeDevice: MetronomeDevice | null;
+let stateCache: { [key: string]: _State } = {};
 
 export function useMetronomeState(song: SongType): MetronomeStateSnapshot {
   // This feels wierd?
-  if (externalMetronomeState !== null && externalMetronomeState !== undefined) {
-    externalMetronomeState.setSong(song);
+  if (externalMetronomeDevice !== null && externalMetronomeDevice !== undefined) {
+    useEffect(() => {
+      externalMetronomeDevice?.setSong(song);
+    }, [song]);
   } else {
     try {
-      externalMetronomeState = new MetronomeState(song);
+      externalMetronomeDevice = new MetronomeDevice(song);
     } catch (error) {
-      externalMetronomeState = null;
+      externalMetronomeDevice = null;
     }
   }
-  return useSyncExternalStore<MetronomeStateSnapshot>(subscribe(), () => {
-    if (externalMetronomeState !== null) {
-      return externalMetronomeState.snapshot();
+  return useSyncExternalStore<MetronomeStateSnapshot>((callback) => {
+    if (externalMetronomeDevice !== null && externalMetronomeDevice !== undefined) {
+      return externalMetronomeDevice.subscribe(callback);
+    } else {
+      // Server side rendering...
+      return () => { };
+    }
+  }, () => {
+    if (externalMetronomeDevice !== null) {
+      return externalMetronomeDevice.snapshot();
     } else {
       throw new Error('MetronomeState is not initialized');
     }
@@ -96,7 +92,7 @@ export function useMetronomeState(song: SongType): MetronomeStateSnapshot {
   });
 }
 
-export class MetronomeState {
+class MetronomeDevice {
   private index: Index = new Index(-1, -1, -1, -1, -1, -1, -1);
   private state: _State;
   private _isLoaded: boolean
@@ -119,6 +115,7 @@ export class MetronomeState {
 
   public setSong(song: SongType) {
     this.controller.song = new Song(song);
+    this.index = this.song.firstIndex();
   }
 
   private get song(): Song {
@@ -241,8 +238,8 @@ export class MetronomeState {
   }
 
   public start(time: number = 0) {
-    this.transport.start();
-    this.loop?.start();
+    this.transport.start(time);
+    this.loop?.start(time);
     console.log(this.transport)
     console.log(this.loop)
     console.log(`state.current.counter = numberOfBeats * numberOfSubBeats - 1`)

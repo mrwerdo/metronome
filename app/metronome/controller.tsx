@@ -77,6 +77,48 @@ export class Index {
         this.sectionStartIndex = sectionStartIndex;
         this.sectionLength = sectionLength;
     }
+
+    public toString(): string {
+        return `section: ${this.section}, bar: ${this.bar}, beat: ${this.beat}, subBeat: ${this.subBeat}, counter: ${this.counter}, sectionStartIndex: ${this.sectionStartIndex}, sectionLength: ${this.sectionLength}`;
+    }
+
+    public equals(index: Index): boolean {
+        return this.section === index.section
+            && this.bar === index.bar
+            && this.beat === index.beat
+            && this.subBeat === index.subBeat
+            && this.counter === index.counter
+            && this.sectionStartIndex === index.sectionStartIndex
+            && this.sectionLength === index.sectionLength;
+    }
+
+    public copy(): Index {
+        return new Index(this.section, this.bar, this.beat, this.subBeat, this.counter, this.sectionStartIndex, this.sectionLength);
+    }
+
+    public isSameSection(index: Index): boolean {
+        return this.section === index.section;
+    }
+
+    public isSameBar(index: Index): boolean {
+        return this.section === index.section && this.bar === index.bar;
+    }
+
+    public isSameBeat(index: Index): boolean {
+        return this.section === index.section && this.bar === index.bar && this.beat === index.beat;
+    }
+
+    public isSameSubBeat(index: Index): boolean {
+        return this.section === index.section && this.bar === index.bar && this.beat === index.beat && this.subBeat === index.subBeat;
+    }
+
+    public isBefore(index: Index): boolean {
+        return this.counter < index.counter;
+    }
+
+    public isAfter(index: Index): boolean {
+        return this.counter > index.counter;
+    }
 }
 
 export class Song implements SongType {
@@ -193,6 +235,39 @@ export class Song implements SongType {
     public indexPreviousSubBeat(index: Index): Index {
         const counter = index.counter - 1;
         return this.indexGivenCounter(counter);
+    }
+
+    public firstIndex(): Index {
+        if (this.sections.length === 0) {
+            return new Index(-1, -1, -1, -1, -1, -1, -1);
+        }
+        const firstSection = this.sections[0];
+        return new Index(
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            firstSection.lengthInTicks()
+        );
+    }
+
+    public lastIndex(): Index {
+        if (this.sections.length === 0) {
+            return new Index(-1, -1, -1, -1, -1, -1, -1);
+        }
+        const lastSectionIndex = this.sections.length - 1;
+        const lastSection = this.sections[lastSectionIndex];
+        return new Index(
+            lastSectionIndex,
+            lastSection.numberOfBars - 1,
+            lastSection.numberOfBeats - 1,
+            lastSection.numberOfSubBeats - 1,
+            lastSection.startOfSectionIndex + lastSection.lengthInTicks() - 1,
+            lastSection.startOfSectionIndex,
+            lastSection.lengthInTicks()
+        );
     }
 }
 

@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, createRef, KeyboardEvent } from "react";
 import { MetronomeState, useMetronomeState } from "./metronome_state";
-import { SectionType, SongType } from "../data";
+import { SongType } from "../data";
 import { Beginning, Back, Play, Forward, End } from "./controls";
+import { Index } from "./controller";
 
 // https://coolors.co/091540-7692ff-abd2fa-3d518c-1b2cc1
 // #091540
@@ -34,7 +35,7 @@ export const MetronomeStandalone = () => {
         }
       ]
     }
-    state.current = new MetronomeState(song, 4, 3, setCounter, setLoaded);
+    state.current = new MetronomeState(song);
     return () => {
       state.current?.stop()
     }
@@ -78,8 +79,16 @@ export function HydrateFallback() {
   return <p>Loading Metronome...</p>
 }
 
-const BeatsInBar = ({ style, numberOfBeats, highlightedBeat } : { style?: React.CSSProperties, numberOfBeats: number, highlightedBeat: number }) => {
+const BeatsInBar = ({ isHighlightedBar: isSameBar, numberOfBeats, isHighlightedBeat: highlightedBeat } : { isHighlightedBar: boolean, numberOfBeats: number, isHighlightedBeat: number }) => {
   const firstVerticalLineStrokeColor = highlightedBeat === 0 ? '#81D2C7' : '#416788';
+  const style = {
+    gridRow: '2',
+    gridColumn: '1',
+    backgroundColor: 'white',
+  };
+  if (isSameBar) {
+    style['backgroundColor'] = 'lightgray';
+  }
   return <svg viewBox="0 0 32 32" style={style}>
     <g stroke="none" strokeWidth="2" fill="none" fillRule="evenodd">
         {/* Vertical Line */}
@@ -105,72 +114,54 @@ export const MetronomeCounter = ({ song }: { song: SongType }) => {
     state.toggleIsPlaying();
   }
 
-  const selectBar = (bar: SectionType, barIndex: number) => {
-    state.setBar(bar, barIndex === -1 ? 0 : barIndex);
-  }
+  const setIndex = (event: React.MouseEvent<HTMLDivElement>, index: Index) => {
+    event.stopPropagation();
+    console.log(index);
+    state.setIndex(index);
+  };
 
   const bars: React.ReactNode[] = [];
 
-  if (song.sections) {
-    let index = -1;
-    let barId = 0;
-    for (let bar of song.sections) {
-      index += 1;
-      const isActive = (state.bar?.id ?? 0) == bar.id;
-      const currentBar = Math.max(0, Math.floor((state.counter - state.totalCountUntilStartOfBar) / (state.numberOfBeats * state.numberOfSubBeats)));
+  if (state.metronome !== null) {
+    let index = state.metronome.controller.song.firstIndex();
+    while (index.counter != -1) {
+      const section = state.metronome.controller.song.sections[index.section];
+      const sectionActiveIndicator = state.index.isSameSection(index) ? '⬤' : '⭘';
+      const isSameBar = state.index.isSameBar(index);
+      const i = index; // javascript copies references to variables, not the actual value.
+      bars.push(
+        <div key={index.counter} className="bar" onClick={event => setIndex(event, i)}>
+              {index.bar === 0 ? <p style={{gridRow: '1', gridColumn: '1'}}>{section.name}</p> : null}
+              {/* Fancy vertical bars in timeline */}
+              <BeatsInBar isHighlightedBar={isSameBar} isHighlightedBeat={isSameBar ? state.index.beat : -1} numberOfBeats={section.numberOfBeats} />
+                {/* State indicators below timeline. */}
+              <p style={{gridRow: '3', gridColumn: '1'}}>{index.section} {sectionActiveIndicator}</p>
+        </div>
+      )
 
-      for (let i = 0; i < bar.numberOfBars; i++) {
-        const isActiveBarInBar = isActive && i === currentBar;
-        const value = isActiveBarInBar ? '⬤' :'⭘';
-        const style = {
-          gridRow: '2',
-          gridColumn: '1',
-          backgroundColor: 'white',
-        };
-        if (isActiveBarInBar) {
-          style['backgroundColor'] = 'lightgray';
-        }
-        barId += 1;
-        bars.push(
-          <div
-            key={`${index}-${i}`}
-            className="bar"
-            onClick={(event) => {
-              event.stopPropagation();
-              selectBar(bar, i+1)
-            }}
-          >
-            {/* Section name above timeline. */}
-            {i === 0 ? <p style={{gridRow: '1', gridColumn: '1'}}>{bar.name}</p> : null}
-            {/* Fancy vertical bars in timeline */}
-            <BeatsInBar style={style}
-              numberOfBeats={bar.numberOfBeats}
-              highlightedBeat={isActiveBarInBar ? state.currentBeat : -1}
-              />
-              {/* State indicators below timeline. */}
-            <p style={{gridRow: '3', gridColumn: '1'}}>{barId} {value}</p>
-          </div>
-        )
-      }
+      index = state.metronome.controller.song.indexNextBar(index);
     }
   }
+
+  const currentSection = state.metronome?.controller.song.sections[state.index.section];
 
   return <>
     <MetronomeCounterInternal
       startStopEvent={handleClick}
-      counter={state.counter ?? 0}
+      counter={state.index.counter ?? 0}
       isLoaded={state.isLoaded}
-      numberOfBeats={state.numberOfBeats ?? null}
-      numberOfSubBeats={state.numberOfSubBeats ?? null}
-      currentBeat={state.currentBeat ?? null}
-      currentSubBeat={state.currentSubBeat ?? null}
+      numberOfBeats={currentSection?.numberOfBeats ?? null}
+      numberOfSubBeats={currentSection?.numberOfSubBeats ?? null}
+      currentBeat={state.index.beat ?? null}
+      currentSubBeat={state.index.subBeat ?? null}
       isPlaying={state.isPlaying ?? null}
     >
       <div className="grid-container">
         <div className="bar"
           onClick={(event) => {
             event.stopPropagation();
-            state.setBar(song.sections[0], 0);
+            console.log('first bar');
+            state.metronome?.setIndex(state.metronome.controller.song.firstIndex());
           }}
         >
           <p style={{gridRow: '1', gridColumn: '1'}}>Above</p>

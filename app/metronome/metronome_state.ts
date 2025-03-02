@@ -2,26 +2,64 @@ import { Sampler, Loop, getTransport } from "tone";
 import studio_01 from "~/assets/tones/studio-01.mp3?url";
 import studio_02 from "~/assets/tones/studio-02.mp3?url";
 import coffee_shop from "~/assets/tones/coffee-shop.mp3?url";
-import { SectionMutation, SectionRecord, SectionType, SongRecord } from "~/data";
+import { SongType } from "~/data";
 import { TransportClass } from "tone/build/esm/core/clock/Transport";
 import { useSyncExternalStore } from "react";
+import { Controller, Index, Song } from "./controller";
 
 let externalMetronomeState: MetronomeState | null;
+let stateCache: { [key: string]: _State } = {};
+
+export interface MetronomeStateSnapshot {
+  index: Index
+  isPlaying: boolean
+  isLoaded: boolean
+  metronome: MetronomeState | null;
+  setIndex(index: Index): void
+  toggleIsPlaying: () => void
+  setVolume(volume: number): void
+}
+
+class _State implements MetronomeStateSnapshot {
+  public index: Index
+  public isPlaying: boolean
+  public isLoaded: boolean
+  public metronome: MetronomeState | null;
+  public controller: Controller;
+
+  constructor(
+    index: Index,
+    isPlaying: boolean,
+    isLoaded: boolean,
+    metronome: MetronomeState | null,
+    controller: Controller,
+  ) {
+    this.index = index;
+    this.isPlaying = isPlaying;
+    this.isLoaded = isLoaded;
+    this.metronome = metronome;
+    this.controller = controller;
+  }
+
+  public setIndex(index: Index) {
+    this.metronome?.setIndex(index);
+  }
+
+  public toggleIsPlaying() {
+    this.metronome?.toggleIsPlaying();
+  }
+
+  public setVolume(volume: number): void {
+    this.metronome?.setVolume(volume);
+  }
+}
 
 function subscribe(): ((callback: () => void) => (() => void)) {
-  let isServerSideRendered = false;
-  try {
-    if (externalMetronomeState === null || externalMetronomeState === undefined) {
-      externalMetronomeState = new MetronomeState(null, 4, 3, null, null);
-      isServerSideRendered = true;
-      return externalMetronomeState.subscribe.bind(externalMetronomeState);
-    } else {
-      return externalMetronomeState.subscribe.bind(externalMetronomeState);
-    }
-  } catch (error) {
+  if (externalMetronomeState !== null && externalMetronomeState !== undefined) {
+    return externalMetronomeState?.subscribe.bind(externalMetronomeState);
+  } else {
     console.log('Assuming server side rendering.');
     externalMetronomeState = null;
-    isServerSideRendered = false;
     return (callback: () => void) => {
       return () => {
         // cleanup is not necessary
@@ -30,131 +68,81 @@ function subscribe(): ((callback: () => void) => (() => void)) {
   }
 }
 
-const getSnapshotServerResult = {
-  counter: 0,
-  numberOfBeats: 4,
-  numberOfSubBeats: 3,
-  currentBeat: 0,
-  currentSubBeat: 0,
-  isPlaying: false,
-  isLoaded: false,
-  totalCountUntilStartOfBar: 0,
-  bar: null,
-  setVolume: (volume: number) => { },
-  setBar: (bar: SectionType, barIndex: number) => { },
-  toggleIsPlaying: () => { }
-};
-
-function getSnapshot(): () => MetronomeStateSnapshot {
-  if (externalMetronomeState !== null) {
-    return externalMetronomeState.snapshot.bind(externalMetronomeState);
-  } else {
-    return () => {
-      return getSnapshotServerResult;
-    };
-  }
-}
-
-export function useMetronomeState(song: SongRecord): MetronomeStateSnapshot {
+export function useMetronomeState(song: SongType): MetronomeStateSnapshot {
   // This feels wierd?
   if (externalMetronomeState !== null && externalMetronomeState !== undefined) {
     externalMetronomeState.setSong(song);
+  } else {
+    try {
+      externalMetronomeState = new MetronomeState(song);
+    } catch (error) {
+      externalMetronomeState = null;
+    }
   }
-
-  return useSyncExternalStore<MetronomeStateSnapshot>(subscribe(), getSnapshot(), getSnapshot())
-}
-
-export interface MetronomeStateSnapshot {
-  counter: number
-  numberOfBeats: number
-  numberOfSubBeats: number
-  currentBeat: number
-  currentSubBeat: number
-  isPlaying: boolean
-  isLoaded: boolean
-  totalCountUntilStartOfBar: number
-  bar: SectionMutation | null
-  setBar(bar: SectionType, barIndex: number): void
-  toggleIsPlaying: () => void
-  setVolume(volume: number): void
+  return useSyncExternalStore<MetronomeStateSnapshot>(subscribe(), () => {
+    if (externalMetronomeState !== null) {
+      return externalMetronomeState.snapshot();
+    } else {
+      throw new Error('MetronomeState is not initialized');
+    }
+  }, () => {
+    if (song.id in stateCache) {
+      return stateCache[song.id];
+    } else {
+      const controller = new Controller(song);
+      stateCache[song.id] = new _State(controller.song.firstIndex(), false, false, null, controller);
+      return stateCache[song.id];
+    }
+  });
 }
 
 export class MetronomeState {
-  private _counter: number
-  private song: SongRecord | null
+  private index: Index = new Index(-1, -1, -1, -1, -1, -1, -1);
+  private state: _State;
+  private _isLoaded: boolean
+  private listeners: Array<() => void> = [];
   private transport: TransportClass
   private loop?: Loop
   private sampler?: Sampler
-  private _numberOfBeats: number
-  private _numberOfSubBeats: number
-  private _totalCountUntilStartOfBar: number
-  private _isLoaded: boolean
-  private setUICounter: React.Dispatch<React.SetStateAction<number>> | null
-  private setLoaded: React.Dispatch<React.SetStateAction<boolean>> | null
-  private setNumberOfBeats?: React.Dispatch<React.SetStateAction<number>>
-  private setNumberOfSubBeats?: React.Dispatch<React.SetStateAction<number>>
-  private listeners: Array<() => void> = [];
-  private _snapshot: MetronomeStateSnapshot = {
-    counter: 0,
-    numberOfBeats: 0,
-    numberOfSubBeats: 0,
-    currentBeat: 0,
-    currentSubBeat: 0,
-    isPlaying: false,
-    isLoaded: false,
-    totalCountUntilStartOfBar: 0,
-    bar: null,
-    setVolume: (volume: number) => {
-    },
-    setBar(bar: SectionType, barIndex: number) {
-      this.setBar(bar, barIndex);
-    },
-    toggleIsPlaying: () => {
-      this.toggleIsPlaying();
-    }
-  };
 
-  private setBar(bar: SectionType, barIndex: number) {
-    if (this.song === null || this.song?.sections=== undefined) {
-      return;
-    }
-
-    const index = this.song.sections.indexOf(bar);
-    if (index === -1) {
-      return;
-    }
-
-
-    this._totalCountUntilStartOfBar = this.song.sections.slice(0, index).reduce((acc, bar) => acc + (bar as SectionRecord).numberOfBars * (bar as SectionRecord).numberOfBeats * (bar as SectionRecord).numberOfSubBeats, 0);
-    this._counter = this._totalCountUntilStartOfBar + (barIndex * bar.numberOfBeats * bar.numberOfSubBeats) - 1;
-    console.log(`setting bar: ${bar.id}, ${bar.numberOfBars}, ${bar.numberOfSubBeats}, ${barIndex}, ${this._totalCountUntilStartOfBar}, ${this._counter}`)
-    this.updateVariables(0);
-    this.updateUserInterface(this._counter);
+  private set _counter(value: number) {
+    this.index = this.song.indexGivenCounter(value);
   }
 
-  public setSong(song: SongRecord) {
-    if (this.song !== song) {
-      // update?
-    }
-    this.song = song;
+  public controller: Controller
+
+  public setIndex(index: Index) {
+    this.index = index;
+    this.updateVariables(0);
+    this.updateUserInterface();
+  }
+
+  public setSong(song: SongType) {
+    this.controller.song = new Song(song);
+  }
+
+  private get song(): Song {
+    return this.controller.song;
   }
 
   public get numberOfBeats(): number {
-    return this._numberOfBeats;
+    return this.song.sections[this.index.section].numberOfBeats;
   }
 
   public get numberOfSubBeats(): number {
-    return this._numberOfSubBeats;
+    return this.song.sections[this.index.section].numberOfSubBeats;
+  }
+
+  public get totalCountUntilStartOfBar(): number {
+    return this.index.sectionStartIndex;
   }
 
   public get currentBeat(): number {
-    const counter = this._counter - this._totalCountUntilStartOfBar
-    return (~~(counter / this._numberOfSubBeats)) % this._numberOfBeats;
+    return this.index.beat;
   }
 
   public get currentSubBeat(): number {
-    const counter = this._counter - this._totalCountUntilStartOfBar
-    return counter % this._numberOfSubBeats;
+    return this.index.subBeat;
   }
 
   public get isPlaying(): boolean {
@@ -166,7 +154,7 @@ export class MetronomeState {
   }
 
   public get counter(): number {
-    return this._counter;
+    return this.index.counter;
   }
 
   public get isLoaded(): boolean {
@@ -174,25 +162,12 @@ export class MetronomeState {
   }
 
   constructor(
-    song: SongRecord | null,
-    numberOfBeats: number,
-    numberOfSubBeats: number,
-    setCounter: React.Dispatch<React.SetStateAction<number>> | null,
-    setLoaded: React.Dispatch<React.SetStateAction<boolean>> | null,
-    setNumberOfBeats?: React.Dispatch<React.SetStateAction<number>>,
-    setNumberOfSubBeats?: React.Dispatch<React.SetStateAction<number>>
+    song: SongType
   ) {
+    this.controller = new Controller(song);
     this._isLoaded = false
     this._counter = 0
-    this.song = song
-    this._numberOfBeats = numberOfBeats;
-    this._numberOfSubBeats = numberOfSubBeats;
-    this._totalCountUntilStartOfBar = 0;
     this.transport = getTransport();
-    this.setUICounter = setCounter
-    this.setLoaded = setLoaded
-    this.setNumberOfBeats = setNumberOfBeats
-    this.setNumberOfSubBeats = setNumberOfSubBeats
     this.loop = new Loop((time) => { this.update(time) }, `4n`);
     this.sampler = new Sampler(
       {
@@ -211,10 +186,72 @@ export class MetronomeState {
     ).toDestination();
 
     this.sampler.volume.value = 10;
+    this.state = new _State(
+      this.index,
+      this.isPlaying,
+      this.isLoaded,
+      this,
+      this.controller,
+    );
 
     this.updateVariables(0);
-    this.updateSnapshot();
-    this.updateListeners();
+    this.updateUserInterface();
+  }
+
+  private update(time: number) {
+    this.updateUserInterface();
+    if (this.currentBeat === 0 && this.currentSubBeat === 0) {
+      this.sampler?.triggerAttack("A1", time);
+    } else if (this.currentSubBeat === 0 && this.numberOfSubBeats > 1) {
+      this.sampler?.triggerAttack("B1", time);
+    } else {
+      this.sampler?.triggerAttack("A2", time);
+    }
+    console.log(`update(${this._counter}, ${this.currentBeat}, ${this.currentSubBeat})`);
+    this.index = this.song.indexNextSubBeat(this.index);
+    if (this.updateVariables(time)) {
+      return;
+    }
+  }
+
+  private updateVariables(time: number): boolean {
+    if (this.index.counter === -1) {
+      this.stop(time);
+      console.log('stopping');
+      return true;
+    }
+    const bpm = this.song.sections[this.index.section].bpm;
+
+    try {
+      // Adjust BPM to apply to the beat instead of the subbeat
+      this.transport.bpm.setValueAtTime(bpm * this.numberOfSubBeats, time);
+    } catch {
+      // Handle error
+    }
+    return false;
+  }
+
+  public toggleIsPlaying() {
+    if (this.transport.state === "started") {
+      this.stop()
+    } else {
+      this.start()
+    }
+    this.updateUserInterface();
+  }
+
+  public start(time: number = 0) {
+    this.transport.start();
+    this.loop?.start();
+    console.log(this.transport)
+    console.log(this.loop)
+    console.log(`state.current.counter = numberOfBeats * numberOfSubBeats - 1`)
+  }
+
+  public stop(time: number = 0) {
+    this.transport.stop(time);
+    this.transport.seconds = 0;
+    this.loop?.stop(time);
   }
 
   public subscribe(callback: () => void): () => void {
@@ -228,165 +265,31 @@ export class MetronomeState {
   }
 
   public snapshot(): MetronomeStateSnapshot {
-    return this._snapshot
+    return this.state;
   }
 
-  private updateListeners() {
-    for (const listener of this.listeners) {
-      listener();
+  private updateUserInterface() {
+    this.state = new _State(
+      this.index,
+      this.isPlaying,
+      this.isLoaded,
+      this,
+      this.controller,
+    );
+
+    for (const subscriberCallback of this.listeners) {
+      subscriberCallback();
     }
-  }
-
-  private update(time: number) {
-    this._counter += 1;
-    if (this.updateVariables(time)) {
-      return;
-    }
-    if (this.currentBeat === 0 && this.currentSubBeat === 0) {
-      this.sampler?.triggerAttack("A1", time);
-    } else if (this.currentSubBeat === 0 && this._numberOfSubBeats > 1) {
-      this.sampler?.triggerAttack("B1", time);
-    } else {
-      this.sampler?.triggerAttack("A2", time);
-    }
-    console.log(`setCounter(${this._counter}, ${this.currentBeat}, ${this.currentSubBeat})`);
-    this.updateUserInterface(this._counter);
-  }
-
-  private currentBar(): [SectionMutation, number] | null {
-    if (this.song === null || this.song?.sections === undefined) {
-      return null;
-    }
-
-    let index = 0;
-    let count = 0;
-    for (; index < this.song.sections.length; index += 1) {
-      const bar: SectionRecord = this.song.sections[index] as SectionRecord
-      const lengthOfBarInCounter = bar.numberOfBars * bar.numberOfBeats * bar.numberOfSubBeats
-      if (count <= this._counter && this._counter < count + lengthOfBarInCounter) {
-        break;
-      } else {
-        count = count + lengthOfBarInCounter
-      }
-    }
-
-    if (index === this.song.sections.length) {
-      return null;
-    }
-
-    return [this.song.sections[index], count];
-  }
-
-  private updateVariables(time: number): boolean {
-    const [bar, count] = this.currentBar() ?? [null, 0];
-
-    if (bar === null && this.song !== null) {
-      this._counter -= 1;
-      this.stop(time);
-      console.log("stopping");
-      return true;
-    }
-
-    if (bar === null) {
-      return true;
-    }
-
-    this._totalCountUntilStartOfBar = count;
-    this._numberOfBeats = bar.numberOfBeats ?? 0;
-    this._numberOfSubBeats = bar.numberOfSubBeats ?? 0;
-    try {
-      // Adjust BPM to apply to the beat instead of the subbeat
-      this.transport.bpm.setValueAtTime((bar.bpm ?? 0) * this._numberOfSubBeats, time);
-    } catch {
-      // Handle error
-    }
-    return false;
-  }
-
-  private setNumberOfBeatsAndSubBeats(beats: number, subbeats: number) {
-    this._numberOfBeats = beats
-    this._numberOfSubBeats = subbeats
-    const previous = this.loop;
-    previous?.stop(0);
-    this.loop = new Loop((time) => { this.update(time) }, `4n`);
-
-    if (this.transport.state === "started") {
-      this.loop.start(0);
-      console.log(`state.current.counter = 0`)
-      this._counter = 0;
-      console.log(`setCounter(${this._counter % (this._numberOfBeats * this._numberOfSubBeats)})`)
-      this.updateUserInterface(this._counter);
-    }
-  }
-
-  public toggleIsPlaying() {
-    if (this.transport.state === "started") {
-      this.stop()
-      this.updateUserInterface(-2);
-    } else {
-      this.start()
-      this.updateUserInterface(-1);
-    }
-  }
-
-  public start(time: number = 0) {
-    this.transport.start();
-    this.loop?.start();
-    console.log(this.transport)
-    console.log(this.loop)
-    console.log(`state.current.counter = numberOfBeats * numberOfSubBeats - 1`)
-    // this._counter = -1;
-    // this._totalCountUntilStartOfBar = 0;
-  }
-
-  public stop(time: number = 0) {
-    this.transport.stop(time);
-    this.transport.seconds = 0;
-    this.loop?.stop(time);
-  }
-
-  private updateSnapshot() {
-    this._snapshot = {
-      counter: this.counter,
-      numberOfBeats: this.numberOfBeats,
-      numberOfSubBeats: this.numberOfSubBeats,
-      currentBeat: this.currentBeat,
-      currentSubBeat: this.currentSubBeat,
-      isPlaying: this.isPlaying,
-      isLoaded: this.isLoaded,
-      totalCountUntilStartOfBar: this._totalCountUntilStartOfBar,
-      bar: this.currentBar()?.[0] ?? null,
-      setVolume: (volume: number) => {
-        this.setVolume(volume);
-      },
-      setBar: (bar: SectionType, barIndex: number) => {
-        this.setBar(bar, barIndex);
-      },
-      toggleIsPlaying: () => {
-        this.toggleIsPlaying();
-      }
-    }
-  }
-
-  private updateUserInterface(c: number) {
-    if (this.setUICounter !== null) {
-      this.setUICounter(c);
-    }
-    this.updateSnapshot();
-    this.updateListeners();
   }
 
   private didLoadSampler() {
-    if (this.setLoaded !== null) {
-      this.setLoaded(true);
-    }
     this._isLoaded = true;
-    this.updateSnapshot();
+    this.updateUserInterface();
   }
 
   public setVolume(volume: number) {
     if (this.sampler) {
-      this.sampler.volume.value = volume; // Adjusting volume to match the range
+      this.sampler.volume.value = volume;
     }
   }
 }

@@ -97,26 +97,29 @@ export async function getSongs(db: D1Database, query?: string | null) {
 }
 
 export async function createSong(db: D1Database) {
+  const song: SongType = {
+    // @ts-expect-error since this is the only time id should be undefined.
+    id: undefined,
+    createdAt: new Date().toISOString(),
+    favorite: false,
+    instrument: 'Violin',
+    name: 'My New Song',
+    sections: [
+      {
+        id: 0,
+        bpm: 120,
+        delay: 0,
+        name: 'Section 1',
+        numberOfBars: 10,
+        numberOfSubBeats: 1,
+        numberOfBeats: 4
+      }
+    ]
+  };
   const kdb = createKyselyDatabase(db)
   const query = await kdb.insertInto('Songs').values(
     {
-      document: JSON.stringify({
-        createdAt: new Date().toISOString(),
-        favorite: false,
-        instrument: 'Violin',
-        name: 'My New Song',
-        bars: [
-          {
-            id: 0,
-            bpm: 120,
-            delay: 0,
-            name: 'Section 1',
-            numberOfBars: 10,
-            subBeats: 1,
-            timeSignature: 4
-          }
-        ]
-      })
+      document: JSON.stringify(song)
     }
   ).returningAll().executeTakeFirstOrThrow()
   return query

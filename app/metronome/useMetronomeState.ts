@@ -88,14 +88,13 @@ export function useMetronomeState(song: SongType): MetronomeStateSnapshot {
       return stateCache[song.id];
     } else {
       const controller = new Controller(song);
-      stateCache[song.id] = new _State(controller.song.firstIndex(), false, false, null, controller);
+      stateCache[song.id] = new _State(controller.firstIndex(), false, false, null, controller);
       return stateCache[song.id];
     }
   });
 }
 
 class MetronomeDevice {
-  private index: Index = new Index(-1, -1, -1, -1, -1, -1, -1);
   private state: _State;
   private isLoaded: boolean
   private listeners: Array<() => void> = [];
@@ -103,10 +102,6 @@ class MetronomeDevice {
   private loop: Loop
   private sampler: Sampler
   private controller: Controller
-
-  private get song(): Song {
-    return this.controller.song;
-  }
 
   private get isPlaying(): boolean {
     if (this.transport.state === "started") {
@@ -119,7 +114,6 @@ class MetronomeDevice {
   constructor(song: SongType) {
     this.controller = new Controller(song);
     this.isLoaded = false
-    this.index = this.song.firstIndex();
     this.transport = getTransport();
     this.loop = new Loop((time) => { this.update(time) }, `4n`);
     this.sampler = new Sampler(
@@ -141,7 +135,7 @@ class MetronomeDevice {
 
     this.sampler.volume.value = 10;
     this.state = new _State(
-      this.index,
+      this.controller.currentIndex,
       this.isPlaying,
       this.isLoaded,
       this,
@@ -153,35 +147,41 @@ class MetronomeDevice {
   }
 
   private update(time: number) {
-    this.updateUserInterface();
-    const section = this.song.sections[this.index.section];
-    if (this.index.beat === 0 && this.index.subBeat === 0) {
+    // todo: some timing problem with starting and finishing the song
+    const section = this.controller.currentSection();
+    if (!section) {
+      return;
+    }
+    if (this.controller.currentIndex.beat === 0 && this.controller.currentIndex.subBeat === 0) {
       this.sampler.triggerAttack("A1", time);
-    } else if (this.index.subBeat === 0 && section.numberOfSubBeats > 1) {
+    } else if (this.controller.currentIndex.subBeat === 0 && section.numberOfSubBeats > 1) {
       this.sampler.triggerAttack("B1", time);
     } else {
       this.sampler.triggerAttack("A2", time);
     }
-    this.index = this.song.indexNextSubBeat(this.index);
     if (this.updateVariables(time)) {
       return;
     }
+    this.updateUserInterface();
+    this.controller.next();
   }
 
   private updateVariables(time: number): boolean {
-    if (this.index.counter === -1) {
+    if (this.controller.currentIndex.isNotAnIndex()) {
       this.stop(time);
       console.log('stopping');
       return true;
     }
-    const section = this.song.sections[this.index.section];
-    this.transport.bpm.setValueAtTime(section.bpm * section.numberOfSubBeats, time);
+    const section = this.controller.currentSection();
+    if (section) {
+      this.transport.bpm.setValueAtTime(section.bpm * section.numberOfSubBeats, time);
+    }
     return false;
   }
 
   private updateUserInterface() {
     this.state = new _State(
-      this.index,
+      this.controller.currentIndex.copy(),
       this.isPlaying,
       this.isLoaded,
       this,
@@ -194,14 +194,13 @@ class MetronomeDevice {
   }
 
   public setIndex(index: Index) {
-    this.index = index;
+    this.controller.currentIndex = index;
     this.updateVariables(0);
     this.updateUserInterface();
   }
 
   public setSong(song: SongType) {
-    this.controller.song = new Song(song);
-    this.index = this.song.firstIndex();
+    this.controller = new Controller(song);
     this.updateUserInterface();
   }
 

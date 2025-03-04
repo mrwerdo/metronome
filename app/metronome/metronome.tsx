@@ -39,15 +39,15 @@ export const MetronomeStandalone = () => {
     state.setVolume(Number(event.target.value));
   };
 
-  const section = state.controller.song.sections[state.index.section];
+  const section = state.controller.sectionAtIndex(state.index);
 
   return <>
     <MetronomeCounterInternal
       startStopEvent={handleClick}
       counter={state.index.counter ?? 0}
       isLoaded={state.isLoaded}
-      numberOfBeats={section.numberOfBeats ?? null}
-      numberOfSubBeats={section.numberOfSubBeats ?? null}
+      numberOfBeats={section?.numberOfBeats ?? null}
+      numberOfSubBeats={section?.numberOfSubBeats ?? null}
       currentBeat={state.index.beat ?? null}
       currentSubBeat={state.index.subBeat ?? null}
       isPlaying={state.isPlaying ?? null}
@@ -112,9 +112,9 @@ export const MetronomeCounter = ({ song }: { song: SongType }) => {
 
   const bars: React.ReactNode[] = [];
 
-  let index = state.controller.song.firstIndex();
+  let index = state.controller.firstIndex();
   while (index.counter != -1) {
-    const section = state.controller.song.sections[index.section];
+    const section = state.controller.sectionAtIndex(index);
     const sectionActiveIndicator = state.index.isSameSection(index) ? '⬤' : '⭘';
     const isSameBar = state.index.isSameBar(index);
     const i = index; // javascript copies references to variables, not the actual value.
@@ -128,10 +128,10 @@ export const MetronomeCounter = ({ song }: { song: SongType }) => {
       </div>
     )
 
-    index = state.controller.song.indexNextBar(index);
+    index = state.controller.nextBarIndex(index);
   }
 
-  const currentSection = state.controller.song.sections[state.index.section];
+  const currentSection = state.controller.sectionAtIndex(state.index);
 
   return <>
     <MetronomeCounterInternal
@@ -148,7 +148,7 @@ export const MetronomeCounter = ({ song }: { song: SongType }) => {
         <div className="bar"
           onClick={(event) => {
             event.stopPropagation();
-            state.setIndex(state.controller.song.firstIndex());
+            state.setIndex(state.controller.firstIndex());
           }}
         >
           <p style={{gridRow: '1', gridColumn: '1'}}>Above</p>

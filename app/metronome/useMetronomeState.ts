@@ -5,7 +5,7 @@ import coffee_shop from "~/assets/tones/coffee-shop.mp3?url";
 import { SongType } from "~/data";
 import { TransportClass } from "tone/build/esm/core/clock/Transport";
 import { useEffect, useSyncExternalStore } from "react";
-import { Controller, Index, Song } from "./controller";
+import { Controller, Index } from "./controller";
 
 export interface MetronomeStateSnapshot {
   index: Index
@@ -102,6 +102,7 @@ class MetronomeDevice {
   private loop: Loop
   private sampler: Sampler
   private controller: Controller
+  private didJustStart: boolean = true;
 
   private get isPlaying(): boolean {
     if (this.transport.state === "started") {
@@ -142,41 +143,41 @@ class MetronomeDevice {
       this.controller,
     );
 
-    this.updateVariables(0);
+    this.updateBpms(0);
     this.updateUserInterface();
   }
 
   private update(time: number) {
-    // todo: some timing problem with starting and finishing the song
-    const section = this.controller.currentSection();
-    if (!section) {
-      return;
-    }
-    if (this.controller.currentIndex.beat === 0 && this.controller.currentIndex.subBeat === 0) {
-      this.sampler.triggerAttack("A1", time);
-    } else if (this.controller.currentIndex.subBeat === 0 && section.numberOfSubBeats > 1) {
-      this.sampler.triggerAttack("B1", time);
+    if (this.didJustStart) {
+      // The user interface shows the current beat even though the sound has not played for it yet.
+      this.didJustStart = false;
     } else {
-      this.sampler.triggerAttack("A2", time);
+      this.controller.next();
     }
-    if (this.updateVariables(time)) {
-      return;
+    const section = this.controller.currentSection();
+    if (section !== null) {
+      if (this.controller.currentIndex.beat === 0 && this.controller.currentIndex.subBeat === 0) {
+        this.sampler.triggerAttack("A1", time);
+      } else if (this.controller.currentIndex.subBeat === 0 && section.numberOfSubBeats > 1) {
+        this.sampler.triggerAttack("B1", time);
+      } else {
+        this.sampler.triggerAttack("A2", time);
+      }
+      this.updateBpms(time);
+    } else {
+      this.stop();
+      // When we get to end of song, just rewind it a little so that the user interface shows
+      // values that make sense, instead of undefined values.
+      this.controller.currentIndex = this.controller.lastIndex();
     }
     this.updateUserInterface();
-    this.controller.next();
   }
 
-  private updateVariables(time: number): boolean {
-    if (this.controller.currentIndex.isNotAnIndex()) {
-      this.stop(time);
-      console.log('stopping');
-      return true;
-    }
+  private updateBpms(time: number) {
     const section = this.controller.currentSection();
-    if (section) {
+    if (section !== null) {
       this.transport.bpm.setValueAtTime(section.bpm * section.numberOfSubBeats, time);
     }
-    return false;
   }
 
   private updateUserInterface() {
@@ -195,7 +196,7 @@ class MetronomeDevice {
 
   public setIndex(index: Index) {
     this.controller.currentIndex = index;
-    this.updateVariables(0);
+    this.updateBpms(0);
     this.updateUserInterface();
   }
 
@@ -212,22 +213,24 @@ class MetronomeDevice {
 
   public toggleIsPlaying() {
     if (this.transport.state === "started") {
-      this.stop()
+      this.stop();
     } else {
-      this.start()
+      this.start();
     }
     this.updateUserInterface();
   }
 
   public start(time: number = 0) {
-    this.transport.start(time);
-    this.loop.start(time);
+    this.transport.start();
+    this.loop.start('0:0:0');
+    this.transport.ticks = 0;
+    this.didJustStart = true;
   }
 
   public stop(time: number = 0) {
     this.transport.stop(time);
-    this.transport.seconds = 0;
     this.loop.stop(time);
+    this.transport.ticks = 0;
   }
 
   public subscribe(callback: () => void): () => void {

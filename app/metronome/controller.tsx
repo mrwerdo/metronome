@@ -331,6 +331,10 @@ export class Controller {
         return this.song.firstIndex();
     }
 
+    public lastIndex(): Index {
+        return this.song.lastIndex();
+    }
+
     public sectionAtIndex(index: Index): Section {
         return this.song.sections[index.section];
     }

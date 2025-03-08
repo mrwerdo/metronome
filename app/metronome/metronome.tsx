@@ -2,7 +2,8 @@ import React, { useEffect, createRef, KeyboardEvent } from "react";
 import { useMetronomeState } from "./useMetronomeState";
 import { SongType } from "../data";
 import { Beginning, Back, Play, Forward, End } from "./controls";
-import { Index } from "./controller";
+import { Index, Section } from "./controller";
+import * as Tone from "tone";
 
 // https://coolors.co/091540-7692ff-abd2fa-3d518c-1b2cc1
 // #091540
@@ -32,24 +33,23 @@ const veryLongSong: SongType = {
 export const MetronomeStandalone = () => {
   const state = useMetronomeState(veryLongSong);
   const handleClick = () => {
-    state.toggleIsPlaying();
+    Tone.start().then(() => {
+      state.toggleIsPlaying();
+    });
   }
 
   const handleVolumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     state.setVolume(Number(event.target.value));
   };
 
-  const section = state.controller.sectionAtIndex(state.index);
+  const section = state.controller.sectionAtIndex(state.index) ?? null;
 
   return <>
     <MetronomeCounterInternal
       startStopEvent={handleClick}
-      counter={state.index.counter ?? 0}
+      section={section}
+      index={state.index}
       isLoaded={state.isLoaded}
-      numberOfBeats={section?.numberOfBeats ?? null}
-      numberOfSubBeats={section?.numberOfSubBeats ?? null}
-      currentBeat={state.index.beat ?? null}
-      currentSubBeat={state.index.subBeat ?? null}
       isPlaying={state.isPlaying ?? null}
     />
     <div>
@@ -102,7 +102,9 @@ export const MetronomeCounter = ({ song }: { song: SongType }) => {
   const state = useMetronomeState(song);
 
   const handleClick = () => {
-    state.toggleIsPlaying();
+    Tone.start().then(() => {
+      state.toggleIsPlaying();
+    });
   }
 
   const setIndex = (event: React.MouseEvent<HTMLDivElement>, index: Index) => {
@@ -112,10 +114,11 @@ export const MetronomeCounter = ({ song }: { song: SongType }) => {
 
   const bars: React.ReactNode[] = [];
 
+  let barNumber = 1;
   let index = state.controller.firstIndex();
   while (index.counter != -1) {
     const section = state.controller.sectionAtIndex(index);
-    const sectionActiveIndicator = state.index.isSameSection(index) ? '⬤' : '⭘';
+    const sectionActiveIndicator = state.index.isSameBar(index) ? '⬤' : '⭘';
     const isSameBar = state.index.isSameBar(index);
     const i = index; // javascript copies references to variables, not the actual value.
     bars.push(
@@ -124,24 +127,21 @@ export const MetronomeCounter = ({ song }: { song: SongType }) => {
             {/* Fancy vertical bars in timeline */}
             <BeatsInBar isHighlightedBar={isSameBar} isHighlightedBeat={isSameBar ? state.index.beat : -1} numberOfBeats={section.numberOfBeats} />
             {/* State indicators below timeline. */}
-            <p style={{gridRow: '3', gridColumn: '1'}}>{index.section} {sectionActiveIndicator}</p>
+            <p style={{gridRow: '3', gridColumn: '1'}}>{barNumber} {sectionActiveIndicator}</p>
       </div>
     )
-
+    barNumber += 1;
     index = state.controller.nextBarIndex(index);
   }
 
-  const currentSection = state.controller.sectionAtIndex(state.index);
+  const currentSection = state.controller.sectionAtIndex(state.index) ?? null;
 
   return <>
     <MetronomeCounterInternal
       startStopEvent={handleClick}
-      counter={state.index.counter ?? 0}
+      index={state.index}
       isLoaded={state.isLoaded}
-      numberOfBeats={currentSection?.numberOfBeats ?? null}
-      numberOfSubBeats={currentSection?.numberOfSubBeats ?? null}
-      currentBeat={state.index.beat ?? null}
-      currentSubBeat={state.index.subBeat ?? null}
+      section={currentSection}
       isPlaying={state.isPlaying ?? null}
     >
       <div className="grid-container">
@@ -200,22 +200,30 @@ function calculateStyles(numberOfBeats: number, numberOfSubBeats: number, counte
   return styles;
 }
 
+const BeatsAndSubBeatsVisualizer = ({numberOfBeats, numberOfSubBeats, index} : { numberOfBeats: number, numberOfSubBeats: number, index: Index}) => {
+  const elements: React.ReactNode[] = [];
+  for (let i = 0; i < numberOfBeats * numberOfSubBeats; i += 1) {
+    let element = <span style={calculateStyles(numberOfBeats, numberOfSubBeats, index.beat * numberOfSubBeats + index.subBeat, i)} key={i}>
+      {i+1}
+    </span>
+    elements.push(element);
+  }
+  return <>
+  {elements}
+  </>;
+}
+
 
 interface MetronomeCounterInternalProps {
   startStopEvent: () => void
-  counter: number | null
-  isLoaded: boolean
-  numberOfBeats: number | null
-  numberOfSubBeats: number | null
-  currentBeat: number | null
-  currentSubBeat: number | null
+  index: Index
+  section: Section | null
   isPlaying: boolean | null
+  isLoaded: boolean
   children?: React.ReactNode
 }
 
-function MetronomeCounterInternal(props: MetronomeCounterInternalProps) {
-  const numberOfBeats = props.numberOfBeats ?? 0
-  const numberOfSubBeats = props.numberOfSubBeats ?? 0
+export const MetronomeCounterInternal = ({ index, section, isPlaying, children, startStopEvent } : MetronomeCounterInternalProps) => {
   const div = createRef<HTMLDivElement>();
 
   useEffect(() => {
@@ -225,21 +233,19 @@ function MetronomeCounterInternal(props: MetronomeCounterInternalProps) {
   const keypress = (event: KeyboardEvent) => {
     if (event.key === ' ') {
       event.preventDefault();
-      props.startStopEvent();
+      startStopEvent();
     }
   }
 
-  const isPlaying = props.isPlaying ?? false;
-
-  const currentBeat = props.currentBeat ?? 0;
-  const subbeat = props.currentSubBeat ?? 0;
+  const numberOfBeats = section?.numberOfBeats ?? 0;
+  const numberOfSubBeats = section?.numberOfSubBeats ?? 0;
 
   return (
     <>
       <div ref={div} tabIndex={0} onKeyDown={keypress}>
         <div>
-          <p>Counter: {props.counter}, Normalized Counter: {subbeat}</p>
-          <p style={{ fontSize: 100, textAlign: "center", margin: 0 }}>{(currentBeat % numberOfBeats) + 1}.<span style={{ fontSize: 50 }}>{subbeat + 1}</span></p>
+          <p>Counter: {index.counter}, Normalized Counter: {index.subBeat}</p>
+          <p style={{ fontSize: 100, textAlign: "center", margin: 0 }}>{(index.beat) + 1}.<span style={{ fontSize: 50 }}>{index.subBeat + 1}</span></p>
         </div>
         <div style={{
           display: 'grid',
@@ -250,20 +256,14 @@ function MetronomeCounterInternal(props: MetronomeCounterInternalProps) {
           justifyContent: 'center',
           marginBottom: '2em'
         }}>
-          {
-            Array(numberOfBeats * numberOfSubBeats).fill(1).map((value, index) => {
-              const offset = index % numberOfSubBeats;
-              const beat = (index - offset) / numberOfSubBeats;
-              return <span style={calculateStyles(numberOfBeats, numberOfSubBeats, currentBeat * numberOfSubBeats + subbeat, index)} key={index}>{offset === 0 ? (beat+1).toString() : ''}</span>
-            })
-          }
+          <BeatsAndSubBeatsVisualizer numberOfBeats={numberOfBeats} numberOfSubBeats={numberOfSubBeats} index={index} />
         </div>
-        { props.children }
+        { children }
         {/* make these stay at the bottom of the page, everything above should scroll */}
         <div style={{ display: 'flex', justifyContent: 'center', margin: '2em' }}>
           <Beginning onClick={() => console.log('beginning')}/>
           <Back onClick={() => console.log('back')}/>
-          <Play isPlaying={isPlaying} onClick={props.startStopEvent}/>
+          <Play isPlaying={isPlaying ?? false} onClick={startStopEvent}/>
           <Forward onClick={() => console.log('forward')} />
           <End onClick={() => console.log('end')}/>
         </div>

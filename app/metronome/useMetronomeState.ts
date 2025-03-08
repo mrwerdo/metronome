@@ -6,6 +6,7 @@ import { SongType } from "~/data";
 import { TransportClass } from "tone/build/esm/core/clock/Transport";
 import { useEffect, useSyncExternalStore } from "react";
 import { Controller, Index } from "./controller";
+import * as Tone from "tone";
 
 export interface MetronomeStateSnapshot {
   index: Index
@@ -211,13 +212,19 @@ class MetronomeDevice {
     }
   }
 
-  public toggleIsPlaying() {
+  private _toggleIsPlaying() {
     if (this.transport.state === "started") {
       this.stop();
     } else {
       this.start();
     }
     this.updateUserInterface();
+  }
+
+  public toggleIsPlaying() {
+    Tone.start().then(() => {
+      this._toggleIsPlaying();
+    });
   }
 
   public start(time: number = 0) {

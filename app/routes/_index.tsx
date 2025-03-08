@@ -1,4 +1,4 @@
-import { MetronomeStandalone } from "~/metronome/metronome";
+import { StandaloneMetronome } from "~/metronome/views";
 
 export default function Index() {
     return (
@@ -6,7 +6,7 @@ export default function Index() {
         <h1 id="index-page">
           Metromone
         </h1>
-        <MetronomeStandalone />
+        <StandaloneMetronome />
       </>
     );
   }

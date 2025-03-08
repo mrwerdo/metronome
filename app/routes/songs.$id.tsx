@@ -5,7 +5,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/cloudfla
 import invariant from "tiny-invariant";
 import { getSong, setFavorite, updateSong } from "../data";
 import type { SongType } from "../data";
-import { MetronomeCounter } from "~/metronome/metronome";
+import { SectionalMetronome } from "~/metronome/views";
 import { useMetronomeState } from "~/metronome/useMetronomeState";
 import { Settings } from '../metronome/controls';
 
@@ -124,7 +124,7 @@ export default function Songs() {
           onChange={handleVolumeChange}
         />
       </div>
-      <MetronomeCounter song={song} />
+      <SectionalMetronome song={song} />
     </div>
   );
 }

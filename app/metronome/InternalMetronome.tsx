@@ -1,4 +1,3 @@
-import { Beginning, Back, Play, Forward, End } from "./controls";
 import { Index, Section } from "./controller";
 import React, { useEffect, createRef, KeyboardEvent } from "react";
 
@@ -95,14 +94,6 @@ export const MetronomeCounterInternal = ({ index, section, isPlaying, children, 
           <BeatsAndSubBeatsVisualizer numberOfBeats={numberOfBeats} numberOfSubBeats={numberOfSubBeats} index={index} />
         </div>
         { children }
-        {/* make these stay at the bottom of the page, everything above should scroll */}
-        <div style={{ display: 'flex', justifyContent: 'center', margin: '2em' }}>
-          <Beginning onClick={() => console.log('beginning')}/>
-          <Back onClick={() => console.log('back')}/>
-          <Play isPlaying={isPlaying ?? false} onClick={startStopEvent}/>
-          <Forward onClick={() => console.log('forward')} />
-          <End onClick={() => console.log('end')}/>
-        </div>
       </div>
     </>
   );

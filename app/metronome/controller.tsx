@@ -206,7 +206,16 @@ export class Song implements SongType {
         if (index.beat > 0) {
             return this.indexAtCoordinates(index.section, index.bar, 0, 0);
         }
-        return index.bar === 0 ? this._noCheckPreviousSection(index) : this.indexAtCoordinates(index.section, index.bar - 1, 0, 0);
+        if (index.bar === 0) {
+            if (index.section === 0) {
+                return this.firstIndex();
+            } else {
+                const section = this.sections[index.section - 1];
+                return this.indexAtCoordinates(index.section - 1, section.numberOfBars - 1, 0, 0);
+            }
+        } else {
+            return index.bar === 0 ? this._noCheckPreviousSection(index) : this.indexAtCoordinates(index.section, index.bar - 1, 0, 0);
+        }
     }
 
     private _noCheckPreviousBeat(index: Index): Index {
@@ -246,12 +255,12 @@ export class Song implements SongType {
     }
 
     public indexPreviousBar(index: Index): Index {
-        const section = this.sections[index.section];
+        this.checkValid(index);
         return this._noCheckPreviousBar(index);
     }
 
     public indexPreviousBeat(index: Index): Index {
-        const section = this.sections[index.section];
+        this.checkValid(index);
         return this._noCheckPreviousBeat(index);
     }
 
@@ -378,5 +387,13 @@ export class Controller {
 
     public next() {
         this.currentIndex = this.song.indexNextSubBeat(this.currentIndex);
+    }
+
+    public previousSection(): Index {
+        return this.song.indexPreviousSection(this.currentIndex);
+    }
+
+    public previousBar(): Index {
+        return this.song.indexPreviousBar(this.currentIndex);
     }
 }

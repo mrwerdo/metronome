@@ -1,7 +1,8 @@
 import { useMetronomeState } from "./useMetronomeState";
 import { SongType } from "../data";
-import { Index, Section } from "./controller";
+import { Index } from "./controller";
 import { MetronomeCounterInternal } from "./InternalMetronome";
+import { Back, Beginning, End, Forward, Play } from "./controls";
 
 // https://coolors.co/091540-7692ff-abd2fa-3d518c-1b2cc1
 // #091540
@@ -99,6 +100,22 @@ export const SectionalMetronome = ({ song }: { song: SongType }) => {
         </div>
       </div>
     </MetronomeCounterInternal>
+    <div style={{ display: 'flex', justifyContent: 'center', margin: '2em' }}>
+      <Beginning onClick={() => { 
+        state.setIndex(state.controller.previousSection());
+      }}/>
+      <Back onClick={() => {
+        console.log('back');
+        // state.setIndex(state.controller.)
+        state.setIndex(state.controller.previousBar());
+      }}/>
+      <Play isPlaying={state.isPlaying ?? false} onClick={handleClick}/>
+      <Forward onClick={() => {
+        state.setIndex(state.controller.nextBarIndex(state.controller.currentIndex));
+      }} />
+      <End onClick={() => {
+        state.setIndex(state.controller.nextSection());
+      }}/>
+    </div>
   </>
 }
-

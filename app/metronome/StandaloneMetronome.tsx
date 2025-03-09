@@ -1,4 +1,5 @@
 import { SongType } from "../data";
+import { Play } from "./controls";
 import { MetronomeCounterInternal } from "./InternalMetronome";
 import { useMetronomeState } from "./useMetronomeState";
 
@@ -24,7 +25,7 @@ const veryLongSong: SongType = {
 export const StandaloneMetronome = () => {
   const state = useMetronomeState(veryLongSong);
   const handleClick = () => {
-      state.toggleIsPlaying();
+    state.toggleIsPlaying();
   }
 
   const handleVolumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,6 +42,9 @@ export const StandaloneMetronome = () => {
       isLoaded={state.isLoaded}
       isPlaying={state.isPlaying ?? null}
     />
+    <div style={{display: 'flex', justifyContent: 'center'}}>
+      <Play isPlaying={state.isPlaying ?? false} onClick={handleClick}/>
+    </div>
     <div>
       <label htmlFor="volume">Volume: </label>
       <input

@@ -4,11 +4,12 @@ import { useEffect, useLayoutEffect, useState, type FunctionComponent } from "re
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/cloudflare";
 import invariant from "tiny-invariant";
 import { getSong, setFavorite, updateSong } from "../data";
-import type { SongType } from "../data";
+import type { SectionType, SongType } from "../data";
 import { SectionalMetronome } from "~/metronome/views";
 import { useMetronomeState } from "~/metronome/useMetronomeState";
 import { PlusMinusControl } from '~/metronome/controls';
 import { Settings } from '../metronome/controls';
+import { Index, Section, Song } from "~/metronome/controller";
 
 export const loader = async ({
   params,
@@ -205,6 +206,38 @@ export default function Songs() {
                 if (section.numberOfBars > 1) {
                   section.numberOfBars -= 1;
                   state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
+                  setIsDirty(true);
+                }
+              }
+            }}
+          />
+          <PlusMinusControl
+            name="Section" 
+            onIncrease={() => {
+              if (!state.index.isNotAnIndex()) {
+                const section: SectionType = {
+                  id: state.index.section,
+                  name: `Section ${state.index.section}`,
+                  bpm: 120,
+                  numberOfBeats: 4,
+                  numberOfSubBeats: 4,
+                  delay: 0,
+                  numberOfBars: 4
+                }
+                const temporarySong = new Song(song);
+                const index = temporarySong.indexAtCoordinates(state.index.section + 1, 0, 0, 0);
+                song.sections.splice(state.index.section + 1, 0, section)
+                state.metronome?.setSongWithIndex(song, index);
+                setIsDirty(true);
+              }
+            }}
+            onDecrease={() => {
+              if (!state.index.isNotAnIndex()) {
+                if (song.sections.length > 1) {
+                  song.sections.splice(state.index.section, 1);
+                  const temporarySong = new Song(song);
+                  const index = temporarySong.indexAtCoordinates(Math.max(state.index.section + -1, 0), 0, 0, 0);
+                  state.metronome?.setSongWithIndex(song, index);
                   setIsDirty(true);
                 }
               }

@@ -47,11 +47,14 @@ function calculateStyles(numberOfBeats: number, numberOfSubBeats: number, counte
 
 const BeatsAndSubBeatsVisualizer = ({numberOfBeats, numberOfSubBeats, index} : { numberOfBeats: number, numberOfSubBeats: number, index: Index}) => {
   const elements: React.ReactNode[] = [];
-  for (let i = 0; i < numberOfBeats * numberOfSubBeats; i += 1) {
-    let element = <span style={calculateStyles(numberOfBeats, numberOfSubBeats, index.beat * numberOfSubBeats + index.subBeat, i)} key={i}>
-      {i+1}
-    </span>
-    elements.push(element);
+  for (let beat = 0; beat < numberOfBeats; beat += 1) {
+    for (let subBeat = 0; subBeat < numberOfSubBeats; subBeat += 1) {
+      const i = beat * numberOfSubBeats + subBeat;
+      let element = <span style={calculateStyles(numberOfBeats, numberOfSubBeats, index.beat * numberOfSubBeats + index.subBeat, i)} key={i}>
+        { subBeat === 0 ? (beat + 1).toString() : '' }
+      </span>
+      elements.push(element);
+    }
   }
   return <>
   {elements}

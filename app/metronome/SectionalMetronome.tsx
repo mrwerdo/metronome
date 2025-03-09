@@ -10,6 +10,7 @@ import { Back, Beginning, End, Forward, Play } from "./controls";
 // #ABD2FA
 // #3D518C
 // #1B2CC1
+// #E0E0E2
 
 const BeatsInBar = ({ isHighlightedBar, isHighlightedBeat, numberOfBeats } : { isHighlightedBar: boolean, isHighlightedBeat: number, numberOfBeats: number, }) => {
   const firstVerticalLineStrokeColor = isHighlightedBeat === 0 ? '#81D2C7' : '#416788';
@@ -25,8 +26,6 @@ const BeatsInBar = ({ isHighlightedBar, isHighlightedBeat, numberOfBeats } : { i
     <g stroke="none" strokeWidth="2" fill="none" fillRule="evenodd">
         {/* Vertical Line */}
         <line x1="1" y1="0" x2="1" y2="32" stroke={firstVerticalLineStrokeColor} />
-        {/* Center Horizontal Line */}
-        <line x1="0" y1="16.5" x2="32" y2="16.5" />
         {/* Additional Lines */}
         {Array(numberOfBeats - 1).fill(1).map((value, index) => {
           const i = index + 1;

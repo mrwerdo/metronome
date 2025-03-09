@@ -86,7 +86,9 @@ export function useMetronomeState(song: SongType): MetronomeStateSnapshot {
     }
   }, () => {
     if (song.id in stateCache) {
-      return stateCache[song.id];
+      const result = stateCache[song.id];
+      result.metronome?.setSong(song);
+      return result;
     } else {
       const controller = new Controller(song);
       stateCache[song.id] = new _State(controller.firstIndex(), false, false, null, controller);
@@ -203,6 +205,12 @@ class MetronomeDevice {
 
   public setSong(song: SongType) {
     this.controller = new Controller(song);
+    this.updateUserInterface();
+  }
+
+  public setSongWithIndex(song: SongType, index: Index) {
+    this.controller = new Controller(song);
+    this.controller.currentIndex = index;
     this.updateUserInterface();
   }
 

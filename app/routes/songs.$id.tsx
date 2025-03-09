@@ -1,12 +1,13 @@
 import { json } from "@remix-run/cloudflare";
 import { Form, useLoaderData, useFetcher, useSubmit, Outlet, Link } from "@remix-run/react";
-import { useState, type FunctionComponent } from "react";
+import { useEffect, useLayoutEffect, useState, type FunctionComponent } from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/cloudflare";
 import invariant from "tiny-invariant";
 import { getSong, setFavorite, updateSong } from "../data";
 import type { SongType } from "../data";
 import { SectionalMetronome } from "~/metronome/views";
 import { useMetronomeState } from "~/metronome/useMetronomeState";
+import { PlusMinusControl } from '~/metronome/controls';
 import { Settings } from '../metronome/controls';
 
 export const loader = async ({
@@ -45,7 +46,17 @@ export const action = async ({
     }
     song['id'] = params.id;
     song['name'] = song['name'] + ' (Copy)';
-    console.log('update song');
+    return updateSong(db, params.id, song);
+  } else if (action === 'save') {
+    const data: string = formData.get('data')?.toString() as string;
+    if (data === null || data === undefined) {
+      return;
+    }
+    const song = JSON.parse(data);
+    if (song === null || data == undefined) {
+      return;
+    }
+    song['id'] = params.id;
     return updateSong(db, params.id, song);
   } else {
     console.log('unknown action');
@@ -57,12 +68,19 @@ export default function Songs() {
   const { song } = useLoaderData<typeof loader>();
   const submit = useSubmit();
 
-  const metronome = useMetronomeState(song);
+  const state = useMetronomeState(song);
+  const [isDirty, setIsDirty] = useState(false);
   const [volume, setVolume] = useState(10);
+
+  useEffect(() => {
+    // This still doesn't quite cut it, since we need to refresh the data from the server,
+    // since the client side data has been... shock, horror, gasp ...modified.
+    setIsDirty(false);
+  }, [song.id]);
 
   const handleVolumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setVolume(Number(event.target.value));
-    metronome.setVolume(Number(event.target.value));
+    state.setVolume(Number(event.target.value));
   };
 
   return (
@@ -124,7 +142,88 @@ export default function Songs() {
           onChange={handleVolumeChange}
         />
       </div>
-      <SectionalMetronome song={song} />
+      <SectionalMetronome song={song}  />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', margin: '2em' }}>
+        <div></div>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '1em' }}>
+          <PlusMinusControl
+            name="Sub-beat" 
+            onIncrease={() => {
+              if (!state.index.isNotAnIndex()) {
+                const section = song.sections[state.index.section];
+                // is this modifying the loader data?
+                section.numberOfSubBeats += 1;
+                state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
+                setIsDirty(true);
+              }
+            }}
+            onDecrease={() => {
+              if (!state.index.isNotAnIndex()) {
+                const section = song.sections[state.index.section];
+                if (section.numberOfSubBeats > 0) {
+                  section.numberOfSubBeats -= 1;
+                  state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
+                  setIsDirty(true);
+                }
+              }
+            }}
+          />
+          <PlusMinusControl
+            name="Beat" 
+            onIncrease={() => {
+              if (!state.index.isNotAnIndex()) {
+                const section = song.sections[state.index.section];
+                section.numberOfBeats += 1;
+                state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
+                setIsDirty(true);
+              }
+            }}
+            onDecrease={() => {
+              if (!state.index.isNotAnIndex()) {
+                const section = song.sections[state.index.section];
+                if (section.numberOfBeats > 1) {
+                  section.numberOfBeats -= 1;
+                  state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
+                  setIsDirty(true);
+                }
+              }
+            }}
+          />
+          <PlusMinusControl
+            name="Bar" 
+            onIncrease={() => {
+              if (!state.index.isNotAnIndex()) {
+                const section = song.sections[state.index.section];
+                section.numberOfBars += 1;
+                state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
+                setIsDirty(true);
+              }
+            }}
+            onDecrease={() => {
+              if (!state.index.isNotAnIndex()) {
+                const section = song.sections[state.index.section];
+                if (section.numberOfBars > 1) {
+                  section.numberOfBars -= 1;
+                  state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
+                  setIsDirty(true);
+                }
+              }
+            }}
+          />
+        </div>
+        <div style={{margin: '1em'}}>
+          <Form style={{ visibility: isDirty ? 'visible' : 'hidden' }} action="save" method="post" onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData();
+            const textData = JSON.stringify(song, null, 2)
+            formData.append('data', textData);
+            formData.append('action', 'save');
+            submit(formData, { method: 'post' });
+          }}>
+            <button type="submit">Save</button>
+          </Form>
+        </div>
+      </div>
     </div>
   );
 }

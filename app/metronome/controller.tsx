@@ -301,6 +301,25 @@ export class Song implements SongType {
             lastSection.lengthInTicks()
         );
     }
+
+    public equals(song: Song): boolean {
+        const initial = this.id == song.id
+        && this.name == song.name
+        && this.favorite == song.favorite
+        && this.instrument == song.instrument
+        && this.createdAt == song.createdAt
+        && this.sections.length === song.sections.length
+        if (initial) {
+            for (let i = 0; i < this.sections.length; i += 1) {
+                if (!this.sections[i].equals(song.sections[i])) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
 
 export class Controller {
@@ -395,5 +414,10 @@ export class Controller {
 
     public previousBar(): Index {
         return this.song.indexPreviousBar(this.currentIndex);
+    }
+
+    public isSameSong(song: SongType): boolean {
+        const s = new Song(song);
+        return this.song.equals(s);
     }
 }

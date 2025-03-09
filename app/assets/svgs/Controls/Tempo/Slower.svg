@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32px" height="32px" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Controls/Tempo/Slower</title>
+    <g id="Symbols" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Controls/Tempo" transform="translate(0, -17)">
+            <g id="Controls/Tempo/Slower" transform="translate(0, 17)">
+                <path d="M20.7075,25.2925 C20.9602654,25.5452654 21.0589815,25.913679 20.966463,26.258963 C20.8739444,26.6042469 20.6042469,26.8739444 20.258963,26.966463 C19.913679,27.0589815 19.5452654,26.9602654 19.2925,26.7075 L9.2925,16.7075 C9.10472296,16.5199317 8.99921334,16.2654092 8.99921334,16 C8.99921334,15.7345908 9.10472296,15.4800683 9.2925,15.2925 L19.2925,5.2925 C19.6832415,4.90175857 20.3167585,4.90175858 20.7075,5.29250003 C21.0982414,5.68324148 21.0982414,6.31675853 20.7075,6.7075 L11.41375,16 L20.7075,25.2925 Z" id="Path" fill="#000000" fill-rule="nonzero"></path>
+                <rect id="Rectangle" x="0" y="0" width="32" height="32"></rect>
+            </g>
+        </g>
+    </g>
+</svg>

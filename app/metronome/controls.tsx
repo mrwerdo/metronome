@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import backSvg from '~/assets/svgs/Controls/Back.svg';
 import beginningSvg from '~/assets/svgs/Controls/Beginning.svg';
@@ -77,3 +77,22 @@ export const Settings = (props: {onClick: () => void}) => {
   )
 }
 
+export const PlusMinusControl = ({ name, onIncrease, onDecrease } : { name: string, onIncrease: () => void, onDecrease: () => void  }) => {
+  return <div style={{
+    border: '2px solid #E0E0E2',
+    display: 'grid',
+    gridTemplateAreas: `'a a a a' 'b b c c' 'b b c c'`,
+    }}>
+    <p style={{
+    gridArea: 'a',
+    margin: '0',
+    paddingLeft: '0.5em',
+    paddingRight: '0.5em',
+    borderBottomWidth: '2px',
+    borderBottomColor: '#ABD2FA',
+    borderBottomStyle: 'solid',
+    }}>{name}</p>  
+    <button style={{gridArea: 'b', margin: '0.5em'}} onClick={onDecrease}>-1</button>
+    <button style={{gridArea: 'c', margin: '0.5em'}} onClick={onIncrease}>+1</button>
+  </div>
+};

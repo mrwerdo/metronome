@@ -56,12 +56,13 @@ export const SectionalMetronome = ({ song }: { song: SongType }) => {
   let index = state.controller.firstIndex();
   while (index.counter != -1) {
     const section = state.controller.sectionAtIndex(index);
-    const sectionActiveIndicator = state.index.isSameBar(index) ? '⬤' : '⭘';
+    const sectionActiveIndicator = state.index.isSameBar(index) ? '⬤' : '';
     const isSameBar = state.index.isSameBar(index);
     const i = index; // javascript copies references to variables, not the actual value.
+    const sectionName = section.name.length > 0 ? section.name : `${section.id + 1}`;
     bars.push(
       <div key={index.counter} className="bar" onClick={event => setIndex(event, i)}>
-            {index.bar === 0 ? <p style={{gridRow: '1', gridColumn: '1'}}>{section.name}</p> : null}
+            {index.bar === 0 ? <p style={{gridRow: '1', gridColumn: '1'}}>{sectionName}</p> : null}
             {/* Fancy vertical bars in timeline */}
             <BeatsInBar isHighlightedBar={isSameBar} isHighlightedBeat={isSameBar ? state.index.beat : -1} numberOfBeats={section.numberOfBeats} />
             {/* State indicators below timeline. */}

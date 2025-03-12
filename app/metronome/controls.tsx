@@ -7,6 +7,8 @@ import forwardSvg from '~/assets/svgs/Controls/Forward.svg';
 import pauseSvg from '~/assets/svgs/Controls/Pause.svg';
 import playSvg from '~/assets/svgs/Controls/Play.svg';
 import settingsSvg from '~/assets/svgs/Controls/Settings.svg';
+import fasterSvg from '~/assets/svgs/Controls/Tempo/Faster.svg';
+import slowerSvg from '~/assets/svgs/Controls/Tempo/Slower.svg';
 
 const style = { width: 50, height: 50 };
 
@@ -74,6 +76,24 @@ export const Settings = (props: {onClick: () => void}) => {
     <Button onClick={() => props.onClick()}>
       <img style={style} src={settingsSvg}></img>
     </Button>
+  )
+}
+
+export const Faster = (props: {onClick: () => void}) => {
+  const style={width: 30, height: 30}
+  return (
+    <button style={{padding: '0.5em'}} onClick={props.onClick}>
+      <img style={style} src={fasterSvg}></img>
+    </button>
+  )
+}
+
+export const Slower = (props: {onClick: () => void}) => {
+  const style={width: 30, height: 30}
+  return (
+    <button style={{padding: '0.5em'}} onClick={props.onClick}>
+      <img style={style} src={slowerSvg}></img>
+    </button>
   )
 }
 

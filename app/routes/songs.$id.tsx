@@ -1,15 +1,16 @@
 import { json } from "@remix-run/cloudflare";
 import { Form, useLoaderData, useFetcher, useSubmit, Outlet, Link } from "@remix-run/react";
-import { useEffect, useLayoutEffect, useState, type FunctionComponent } from "react";
+import React, { DetailedHTMLProps, HTMLAttributes, useEffect, useLayoutEffect, useRef, useState, type FunctionComponent } from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/cloudflare";
 import invariant from "tiny-invariant";
 import { getSong, setFavorite, updateSong } from "../data";
 import type { SectionType, SongType } from "../data";
 import { SectionalMetronome } from "~/metronome/views";
-import { useMetronomeState } from "~/metronome/useMetronomeState";
-import { PlusMinusControl } from '~/metronome/controls';
+import { MetronomeStateSnapshot, useMetronomeState } from "~/metronome/useMetronomeState";
+import { Faster, PlusMinusControl, Slower } from '~/metronome/controls';
 import { Settings } from '../metronome/controls';
 import { Index, Section, Song } from "~/metronome/controller";
+import { tempoGivenBpm } from "~/metronome/bpm";
 
 export const loader = async ({
   params,
@@ -65,6 +66,95 @@ export const action = async ({
   }
 };
 
+const TempoControl = ({ state, song, setIsDirty } : { state:  MetronomeStateSnapshot, song: SongType, setIsDirty: (dirty: boolean) => void }) => {
+  if (state.index.isNotAnIndex()) {
+    return <></>
+  }
+
+  const section = song.sections[state.index.section];
+  const tempo = tempoGivenBpm(section.bpm);
+
+  const setTempo = (tempo_t: number) => {
+    section.bpm = tempo_t;
+    if (section.name == tempo.name) {
+      section.name = tempoGivenBpm(tempo_t).name;
+    }
+    state.metronome?.setSongWithIndex(song, state.index);
+    setIsDirty(true);
+  };
+
+  const tempos: number[] = [
+    10, 20, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60,
+    63, 66, 69, 72, 76, 80, 84, 92, 96, 100, 104, 108, 112,
+    126, 130, 132, 144, 152, 160, 168, 176, 184, 192, 200,
+    208, 215, 225, 240, 250, 275, 300
+  ];
+
+  const faster = () => {
+    for (let i = 0; i < tempos.length; i += 1) {
+      if (tempos[i] > section.bpm) {
+        setTempo(tempos[i]);
+        break;
+      }
+    }
+  };
+  
+  const slower = () => {
+    for (let i = tempos.length - 1; i >= 0; i -= 1) {
+      if (tempos[i] < section.bpm) {
+        setTempo(tempos[i]);
+        break;
+      }
+    }
+  };
+
+  const currentTempoElement = useRef<HTMLParagraphElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (currentTempoElement.current && containerRef.current) {
+      const container = containerRef.current;
+      const element = currentTempoElement.current;
+  
+      const containerRect = container.getBoundingClientRect();
+      const elementRect = element.getBoundingClientRect();
+  
+      // Calculate the center position
+      const scrollLeft = container.scrollLeft + 
+        (elementRect.left - containerRect.left) - 
+        (containerRect.width / 2) + (elementRect.width / 2);
+  
+      container.scrollTo({ left: scrollLeft, behavior: "smooth" });
+    }
+  }, [section.bpm]);
+
+  const tempoButtons: React.ReactNode[] = [];
+  for (let tempo of tempos) {
+    if (tempo === section.bpm) {
+      tempoButtons.push(
+        <p key={tempo} ref={currentTempoElement} style={{fontWeight: 'bold'}} onClick={() => { setTempo(tempo); }}>{tempo}</p>
+      );
+    } else {
+      tempoButtons.push(
+        <p key={tempo} onClick={() => { setTempo(tempo); }}>{tempo}</p>
+      );
+    }
+  }
+
+  return <div>
+    <div ref={containerRef} style={{ width: '28em', overflowX: 'scroll', whiteSpace: 'nowrap', scrollbarWidth: 'none'}}>
+      <div style={{display: 'grid', gridAutoFlow: 'column', gridAutoColumns: 'minmax(2em, 1fr)', gap: '10px'}}>
+        { tempoButtons }
+      </div>
+    </div>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 4fr 1fr', alignItems: 'center', justifyItems: 'center', marginBottom: '1em' }}>
+      <Slower onClick={slower} />
+      <p>{tempo.name}</p>
+      <Faster onClick={faster} />
+    </div>
+  </div>
+};
+
 export default function Songs() {
   const { song } = useLoaderData<typeof loader>();
   const submit = useSubmit();
@@ -83,6 +173,8 @@ export default function Songs() {
     setVolume(Number(event.target.value));
     state.setVolume(Number(event.target.value));
   };
+
+  const currentSectionName = state.index.isNotAnIndex() ? '' : song.sections[state.index.section].name;
 
   return (
     <div id="contact">
@@ -144,7 +236,11 @@ export default function Songs() {
         />
       </div>
       <SectionalMetronome song={song}  />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', margin: '2em' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', justifyItems: 'center', margin: '2em' }}>
+        <div>
+        </div>
+        <TempoControl state={state} song={song} setIsDirty={setIsDirty} />
+        <div></div>
         <div></div>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '1em' }}>
           <PlusMinusControl
@@ -256,6 +352,20 @@ export default function Songs() {
             <button type="submit">Save</button>
           </Form>
         </div>
+        <div></div>
+        <div style={{marginTop: '2em', marginBottom: '2em'}}>
+          <label htmlFor="sectionName">Rename</label>
+          <input id="sectionName" name="sectionName" type="text" value={currentSectionName} onChange={(event) => {
+            const text = event.target.value;
+            if (state.index.isNotAnIndex()) {
+              return;
+            }
+            song.sections[state.index.section].name = text;
+            state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
+            setIsDirty(true);
+          }}></input>
+        </div>
+        <div></div>
       </div>
     </div>
   );

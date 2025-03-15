@@ -3,8 +3,8 @@ import { Form, useLoaderData, useFetcher, useSubmit, Outlet, Link } from "@remix
 import React, { DetailedHTMLProps, HTMLAttributes, useEffect, useLayoutEffect, useRef, useState, type FunctionComponent } from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/cloudflare";
 import invariant from "tiny-invariant";
-import { getSong, setFavorite, updateSong } from "../data";
-import type { SectionType, SongType } from "../data";
+import { getSong, setFavorite, updateSong } from "~/data/database";
+import type { SectionType, SongType } from "~/data/database";
 import { SectionalMetronome } from "~/metronome/views";
 import { MetronomeStateSnapshot, useMetronomeState } from "~/metronome/useMetronomeState";
 import { Faster, PlusMinusControl, Slower } from '~/metronome/controls';

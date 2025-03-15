@@ -8,7 +8,7 @@ import {
   sql
 } from 'kysely';
 
-import { DB as Database } from './db.d';
+import { DB as Database } from './db';
 import { D1Dialect } from "kysely-d1";
 import { songTypeSchema } from "./schema";
 

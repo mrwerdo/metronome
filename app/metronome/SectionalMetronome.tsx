@@ -1,5 +1,5 @@
 import { useMetronomeState } from "./useMetronomeState";
-import { SongType } from "../data";
+import { SongType } from "~/data/database";
 import { Index } from "./controller";
 import { MetronomeCounterInternal } from "./InternalMetronome";
 import { Back, Beginning, End, Forward, Play } from "./controls";

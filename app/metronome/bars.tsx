@@ -1,5 +1,5 @@
 import React from "react";
-import type { SectionType } from "../data";
+import type { SectionType } from "~/data/database";
 import { Link } from "@remix-run/react";
 
 interface BarProps {

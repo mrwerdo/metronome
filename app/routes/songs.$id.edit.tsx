@@ -5,7 +5,7 @@ import type {
 import { json } from "@remix-run/cloudflare";
 import { Form, useNavigate, useRouteLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import { getSong, updateSong, SongType } from "../data";
+import { getSong, updateSong, SongType } from "~/data/database";
 
 export const action = async ({
     params,

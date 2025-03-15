@@ -1,4 +1,4 @@
-import { SongType } from "../data";
+import { SongType } from "~/data/database";
 import { Play } from "./controls";
 import { MetronomeCounterInternal } from "./InternalMetronome";
 import { useMetronomeState } from "./useMetronomeState";

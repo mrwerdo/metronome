@@ -22,7 +22,7 @@ import {
 
 import 'remixicon/fonts/remixicon.css'
 import appStylesHref from "./app.css?url";
-import { createSong, getSongs } from "./data";
+import { createSong, getSongs } from "~/data/database";
 import { useEffect } from "react";
 
 export const action = async ({ context, request }: ActionFunctionArgs) => {

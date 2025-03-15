@@ -1,4 +1,4 @@
-import { SectionType, SongType } from "../data";
+import { SectionType, SongType } from "~/data/database";
 
 export class Section implements SectionType {
     id: number;

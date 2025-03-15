@@ -3,7 +3,7 @@ import type {
 } from "@remix-run/cloudflare";
 import { redirect } from "@remix-run/cloudflare";
 import invariant from "tiny-invariant";
-import { deleteSong } from "../data";
+import { deleteSong } from "~/data/database";
 
 export const action = async ({
     params,

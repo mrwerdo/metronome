@@ -132,7 +132,7 @@ const TempoControl = ({ state, song, setIsDirty } : { state:  MetronomeStateSnap
   for (let tempo of tempos) {
     if (tempo === section.bpm) {
       tempoButtons.push(
-        <p key={tempo} ref={currentTempoElement} style={{fontWeight: 'bold'}} onClick={() => { setTempo(tempo); }}>{tempo}</p>
+        <p key={tempo} ref={currentTempoElement} style={{fontWeight: 'bold', fontSize: '110%'}} onClick={() => { setTempo(tempo); }}>{tempo}</p>
       );
     } else {
       tempoButtons.push(
@@ -143,7 +143,7 @@ const TempoControl = ({ state, song, setIsDirty } : { state:  MetronomeStateSnap
 
   return <div>
     <div ref={containerRef} style={{ width: '28em', overflowX: 'scroll', whiteSpace: 'nowrap', scrollbarWidth: 'none'}}>
-      <div style={{display: 'grid', gridAutoFlow: 'column', gridAutoColumns: 'minmax(2em, 1fr)', gap: '10px'}}>
+      <div style={{display: 'grid', gridAutoFlow: 'column', gridAutoColumns: 'minmax(2em, 1fr)', gap: '10px', alignItems: 'baseline'}}>
         { tempoButtons }
       </div>
     </div>

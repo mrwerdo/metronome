@@ -20,8 +20,12 @@ import {
   Link
 } from "@remix-run/react";
 
+import "@radix-ui/themes/styles.css";
 import 'remixicon/fonts/remixicon.css'
+import { Theme, ThemePanel } from "@radix-ui/themes";
+
 import appStylesHref from "./app.css?url";
+import tailwindStylesHref from "./tailwind.css?url";
 import { createSong, getSongs } from "~/data/database";
 import { useEffect } from "react";
 
@@ -33,6 +37,7 @@ export const action = async ({ context, request }: ActionFunctionArgs) => {
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: appStylesHref },
+  // { rel: "stylesheet", href: tailwindStylesHref }
 ];
 
 export const loader = async ({
@@ -72,6 +77,7 @@ export default function App() {
         <Links />
       </head>
       <body>
+        <Theme >
         <div id="sidebar">
           <h1><Link to="/" style={{textDecoration: 'none', color: 'black'}}>Metronome</Link></h1>
           <div>
@@ -144,7 +150,9 @@ export default function App() {
         >
           <Outlet />
         </div>
+        <ThemePanel />
 
+        </Theme>
         <ScrollRestoration />
         <Scripts />
       </body>

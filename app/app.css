@@ -20,14 +20,13 @@ code {
     monospace;
 }
 
-html,
-body {
+html, body {
   height: 100%;
   margin: 0;
   line-height: 1.5;
-  color: #121212;
 }
-textarea,
+
+/* textarea,
 input,
 button {
   font-size: 1rem;
@@ -43,20 +42,20 @@ button {
 button {
   color: #3992ff;
   font-weight: 500;
-}
+} */
 
-textarea:hover,
+/* textarea:hover,
 input:hover,
 button:hover {
   box-shadow: 0 0px 1px hsla(0, 0%, 0%, 0.6), 0 1px 2px hsla(0, 0%, 0%, 0.2);
-}
+} */
 
-button:active {
+/* button:active {
   box-shadow: 0 0px 1px hsla(0, 0%, 0%, 0.4);
   transform: translateY(1px);
-}
+} */
 
-#contact h1 {
+/* #contact h1 {
   display: flex;
   align-items: flex-start;
   gap: 1rem;
@@ -82,9 +81,9 @@ button:active {
 
 form[action$="destroy"] button {
   color: #f44250;
-}
+} */
 
-.sr-only {
+/* .sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -94,28 +93,28 @@ form[action$="destroy"] button {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
-}
+} */
 
-body {
+/* body {
   display: flex;
   height: 100%;
   width: 100%;
-}
+} */
 
-#sidebar {
+/* #sidebar {
   width: 22rem;
   background-color: #f7f7f7;
   border-right: solid 1px #e3e3e3;
   display: flex;
   flex-direction: column;
-}
+} */
 
-#sidebar > * {
+/* #sidebar > * {
   padding-left: 2rem;
   padding-right: 2rem;
-}
+} */
 
-#sidebar h1 {
+/* #sidebar h1 {
   font-size: 1rem;
   font-weight: 500;
   display: flex;
@@ -125,24 +124,24 @@ body {
   border-top: 1px solid #e3e3e3;
   order: 1;
   line-height: 1;
-}
+} */
 
-#sidebar h1::before {
+/* #sidebar h1::before {
   margin-right: 0.5rem;
   position: relative;
   top: 1px;
-}
+} */
 
-#sidebar > div {
+/* #sidebar > div {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding-top: 1rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid #e3e3e3;
-}
+} */
 
-#sidebar > div form {
+/* #sidebar > div form {
   position: relative;
 }
 
@@ -238,9 +237,9 @@ i {
 #sidebar nav a.pending {
   animation: progress 2s infinite ease-in-out;
   animation-delay: 200ms;
-}
+} */
 
-@keyframes progress {
+/* @keyframes progress {
   0% {
     background: #e3e3e3;
   }
@@ -250,9 +249,9 @@ i {
   100% {
     background: #e3e3e3;
   }
-}
+} */
 
-#detail {
+/* #detail {
   flex: 1;
   padding: 2rem 4rem;
   width: 100%;
@@ -351,9 +350,9 @@ i {
 
 #contact-form p:last-child button[type="button"] {
   color: inherit;
-}
+} */
 
-#index-page {
+/* #index-page {
   margin: 2rem auto;
   text-align: center;
   color: #818181;
@@ -378,35 +377,35 @@ i {
   align-items: center;
   justify-content: center;
   width: 100%;
-}
+} */
 
 div:focus-visible {
   outline: none;
 }
 
-.metronome_bar_counter {
+/* .metronome_bar_counter {
   padding: 5px;
   text-align: center;
   font-weight: normal;
   background: #ABD2FA;
   width: 20px;
   align-content: end;
-}
+} */
 
-.metronome_bar_counter_beat {
+/* .metronome_bar_counter_beat {
   background-color: #7389AE;
   height: 50px;
-}
+} */
 
-.metronome_bar_counter_subbeat {
+/* .metronome_bar_counter_subbeat {
   height: 30px;
   background-color: #416788;
-}
+} */
 
-.metronome_bar_counter_current {
+/* .metronome_bar_counter_current {
   font-weight: bold;
   background-color: #81D2C7;
-}
+} */
 
 .grid-container {
   display: grid;
@@ -430,10 +429,6 @@ div:focus-visible {
 
 .bar p {
   margin: 0;
-}
-
-.state-indicator {
-  text-align: center;
 }
 
 .before, .after {

@@ -45,7 +45,7 @@ export const StandaloneMetronome = () => {
     <div style={{display: 'flex', justifyContent: 'center'}}>
       <Play isPlaying={state.isPlaying ?? false} onClick={handleClick}/>
     </div>
-    <div>
+    {/* <div>
       <label htmlFor="volume">Volume: </label>
       <input
         type="range"
@@ -55,6 +55,6 @@ export const StandaloneMetronome = () => {
         max="20"
         onChange={handleVolumeChange}
       />
-    </div>
+    </div> */}
   </>
 }

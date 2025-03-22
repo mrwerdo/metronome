@@ -11,6 +11,7 @@ import { Faster, PlusMinusControl, Slower } from '~/metronome/controls';
 import { Settings } from '../metronome/controls';
 import { Index, Section, Song } from "~/metronome/controller";
 import { tempoGivenBpm } from "~/metronome/bpm";
+import { Box, Button, Container, Flex, IconButton, Slider, TextField } from "@radix-ui/themes";
 
 export const loader = async ({
   params,
@@ -161,7 +162,7 @@ export default function Songs() {
 
   const state = useMetronomeState(song);
   const [isDirty, setIsDirty] = useState(false);
-  const [volume, setVolume] = useState(10);
+  const [volume, setVolume] = useState(30);
 
   useEffect(() => {
     // This still doesn't quite cut it, since we need to refresh the data from the server,
@@ -169,71 +170,67 @@ export default function Songs() {
     setIsDirty(false);
   }, [song.id]);
 
-  const handleVolumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setVolume(Number(event.target.value));
-    state.setVolume(Number(event.target.value));
+  const handleVolumeChange = (value: number[]) => {
+    console.log(value);
+    setVolume(value[0]);
+    state.setVolume(value[0]);
   };
 
   const currentSectionName = state.index.isNotAnIndex() ? '' : song.sections[state.index.section].name;
 
   return (
-    <div id="contact">
+    <Container size='3'>
       <div>
-        <h1>
-          {song.name ? song.name : (<i>No Name</i>)}
-          <Favorite song={song} />
-        </h1>
-
-        <p>{song.instrument}</p>
-
-        {/* <Settings onClick={() => console.log('Settings')}/> */}
-
-        <div>
-          <Form action="edit">
-            <button type="submit">Edit</button>
-          </Form>
-          <Form
-            action="destroy"
-            method="post"
-            onSubmit={(event) => {
-              const response = confirm(
-                "Please confirm you want to delete this record."
-              );
-              if (!response) {
-                event.preventDefault();
-              }
-            }}
-          >
-          <button type="submit">Delete</button>
-          </Form>
-          <button onClick={() => navigator.clipboard.writeText(JSON.stringify(song, null, 2))}>
-            Copy
-          </button>
-          <Form action="paste" method="post" onSubmit={(event) => {
-            event.preventDefault();
-            navigator.clipboard.readText().then((text) => {
-              const formData = new FormData()
-              formData.append('data', text);
-              formData.append('action', 'paste');
-              submit(formData, { method: 'post' });
-            });
-          }}>
-            <button type="submit">Paste</button>
-          </Form>
-        </div>
+          <h1>
+            {song.name ? song.name : (<i>No Name</i>)}
+          </h1>
+          <p>{song.instrument}</p>
+          <Flex gap='2'>
+            <Favorite song={song} />
+            <Form action="edit">
+              <Button type="submit">Edit</Button>
+            </Form>
+            <Form
+              action="destroy"
+              method="post"
+              onSubmit={(event) => {
+                const response = confirm(
+                  "Please confirm you want to delete this record."
+                );
+                if (!response) {
+                  event.preventDefault();
+                }
+              }}
+            >
+              <Button type="submit">Delete</Button>
+            </Form>
+            <Button onClick={() => navigator.clipboard.writeText(JSON.stringify(song, null, 2))}>
+              Copy
+            </Button>
+            <Form action="paste" method="post" onSubmit={(event) => {
+              event.preventDefault();
+              navigator.clipboard.readText().then((text) => {
+                const formData = new FormData()
+                formData.append('data', text);
+                formData.append('action', 'paste');
+                submit(formData, { method: 'post' });
+              });
+            }}>
+              <Button type="submit">Paste</Button>
+            </Form>
+          </Flex>
+          <div>
+            <label htmlFor="volume">Volume: </label>
+            <Slider
+              id="volume"
+              name="volume"
+              value={[volume]}
+              min={10}
+              max={50}
+              onValueChange={handleVolumeChange}
+            />
+          </div>
         <Outlet />
-      </div>
-      <div>
-        <label htmlFor="volume">Volume: </label>
-        <input
-          type="range"
-          id="volume"
-          name="volume"
-          min="0"
-          max="20"
-          value={volume}
-          onChange={handleVolumeChange}
-        />
       </div>
       <SectionalMetronome song={song}  />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', justifyItems: 'center', margin: '2em' }}>
@@ -242,7 +239,7 @@ export default function Songs() {
         <TempoControl state={state} song={song} setIsDirty={setIsDirty} />
         <div></div>
         <div></div>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '1em' }}>
+        <Flex justify='center' gap='1'>
           <PlusMinusControl
             name="Sub-beat" 
             onIncrease={() => {
@@ -339,7 +336,7 @@ export default function Songs() {
               }
             }}
           />
-        </div>
+        </Flex>
         <div style={{margin: '1em'}}>
           <Form style={{ visibility: isDirty ? 'visible' : 'hidden' }} action="save" method="post" onSubmit={(event) => {
             event.preventDefault();
@@ -349,25 +346,25 @@ export default function Songs() {
             formData.append('action', 'save');
             submit(formData, { method: 'post' });
           }}>
-            <button type="submit">Save</button>
+            <Button type="submit">Save</Button>
           </Form>
         </div>
         <div></div>
         <div style={{marginTop: '2em', marginBottom: '2em'}}>
           <label htmlFor="sectionName">Rename</label>
-          <input id="sectionName" name="sectionName" type="text" value={currentSectionName} onChange={(event) => {
-            const text = event.target.value;
+          <TextField.Root id="sectionName" name="sectionName" type="text" value={currentSectionName} onChange={(event) => {
+            const text = event.target.value
             if (state.index.isNotAnIndex()) {
               return;
             }
             song.sections[state.index.section].name = text;
             state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
             setIsDirty(true);
-          }}></input>
+          }}></TextField.Root>
         </div>
         <div></div>
       </div>
-    </div>
+    </Container>
   );
 }
 
@@ -382,7 +379,7 @@ const Favorite: FunctionComponent<{
   return (
     <fetcher.Form method="post">
       <input type="hidden" name="action" value="favorite" />
-      <button
+      <IconButton
         aria-label={
           favorite
             ? "Remove from favorites"
@@ -392,7 +389,7 @@ const Favorite: FunctionComponent<{
         value={favorite ? "false" : "true"}
       >
         {favorite ? "★" : "☆"}
-      </button>
+      </IconButton>
     </fetcher.Form>
   );
 };

@@ -1,28 +1,28 @@
+import { IconButton } from '@radix-ui/themes';
 import React from 'react';
 
-import backSvg from '~/assets/svgs/Controls/Back.svg';
-import beginningSvg from '~/assets/svgs/Controls/Beginning.svg';
-import endSvg from '~/assets/svgs/Controls/End.svg';
-import forwardSvg from '~/assets/svgs/Controls/Forward.svg';
-import pauseSvg from '~/assets/svgs/Controls/Pause.svg';
-import playSvg from '~/assets/svgs/Controls/Play.svg';
-import settingsSvg from '~/assets/svgs/Controls/Settings.svg';
-import fasterSvg from '~/assets/svgs/Controls/Tempo/Faster.svg';
-import slowerSvg from '~/assets/svgs/Controls/Tempo/Slower.svg';
+import BackSvg from '~/assets/svgs/Controls/Back.svg?react';
+import BeginningSvg from '~/assets/svgs/Controls/Beginning.svg?react';
+import EndSvg from '~/assets/svgs/Controls/End.svg?react';
+import ForwardSvg from '~/assets/svgs/Controls/Forward.svg?react';
+import PauseSvgIcon from '~/assets/svgs/Controls/Pause.svg?react';
+import PlaySvgIcon from '~/assets/svgs/Controls/Play.svg?react';
+import SettingsSvg from '~/assets/svgs/Controls/Settings.svg?react';
+import FasterSvg from '~/assets/svgs/Controls/Tempo/Faster.svg?react';
+import SlowerSvg from '~/assets/svgs/Controls/Tempo/Slower.svg?react';
 
-const style = { width: 50, height: 50 };
-
+const style = { color: '--var(--accent-1)', width: 50, height: 50, margin: '4px' };
 
 function Button(props: { onClick: () => void, children: React.ReactNode }) {
-  return (
-    <button onClick={props.onClick}>{props.children}</button>
-  )
+  return <IconButton size='4' onClick={props.onClick}>
+    {props.children}
+  </IconButton>;
 }
 
 export const Back = (props: {onClick: () => void}) => {
   return (
     <Button onClick={() => props.onClick()}>
-      <img style={style} src={backSvg}></img>
+      <BackSvg style={style} />
     </Button>
   )
 }
@@ -30,7 +30,7 @@ export const Back = (props: {onClick: () => void}) => {
 export const Beginning = (props: {onClick: () => void}) => {
   return (
     <Button onClick={() => props.onClick()}>
-      <img style={style} src={beginningSvg}></img>
+      <BeginningSvg style={style} />
     </Button>
   )
 }
@@ -38,7 +38,7 @@ export const Beginning = (props: {onClick: () => void}) => {
 export const CountIn = (props: {onClick: () => void}) => {
   return (
     <Button onClick={() => props.onClick()}>
-      <img style={style} src={beginningSvg}></img>
+      <BeginningSvg style={style} />
     </Button>
   )
 }
@@ -46,7 +46,7 @@ export const CountIn = (props: {onClick: () => void}) => {
 export const End = (props: {onClick: () => void}) => {
   return (
     <Button onClick={() => props.onClick()}>
-      <img style={style} src={endSvg}></img>
+      <EndSvg style={style} />
     </Button>
   )
 }
@@ -54,7 +54,7 @@ export const End = (props: {onClick: () => void}) => {
 export const Forward = (props: {onClick: () => void}) => {
   return (
     <Button onClick={() => props.onClick()}>
-      <img style={style} src={forwardSvg}></img>
+      <ForwardSvg style={style} />
     </Button>
   )
 }
@@ -63,9 +63,7 @@ export const Play = (props: {isPlaying: boolean, onClick: () => void}) => {
   return (
     <Button onClick={() => { props.onClick() }}>
       {
-        props.isPlaying ?
-          <img style={style} src={pauseSvg}></img> :
-          <img style={style} src={playSvg}></img>
+        props.isPlaying ? <PauseSvgIcon style={style} /> : <PlaySvgIcon style={style} />
       }
     </Button>
   )
@@ -74,7 +72,7 @@ export const Play = (props: {isPlaying: boolean, onClick: () => void}) => {
 export const Settings = (props: {onClick: () => void}) => {
   return (
     <Button onClick={() => props.onClick()}>
-      <img style={style} src={settingsSvg}></img>
+      <SettingsSvg style={style} />
     </Button>
   )
 }
@@ -83,7 +81,7 @@ export const Faster = (props: {onClick: () => void}) => {
   const style={width: 30, height: 30}
   return (
     <button style={{padding: '0.5em'}} onClick={props.onClick}>
-      <img style={style} src={fasterSvg}></img>
+      <FasterSvg style={style} />
     </button>
   )
 }
@@ -92,7 +90,7 @@ export const Slower = (props: {onClick: () => void}) => {
   const style={width: 30, height: 30}
   return (
     <button style={{padding: '0.5em'}} onClick={props.onClick}>
-      <img style={style} src={slowerSvg}></img>
+      <SlowerSvg style={style} />
     </button>
   )
 }

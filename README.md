@@ -104,3 +104,4 @@ npm run deploy
 - [Remix Icons](https://remixicon.com)
 - [Vitest](https://vitest.dev/guide/)
 - [Radix UI Themes](https://www.radix-ui.com/themes/docs)
+- [vite-plugin-svgr](https://www.npmjs.com/package/vite-plugin-svgr)

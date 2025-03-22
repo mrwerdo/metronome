@@ -3,6 +3,7 @@ import { SongType } from "~/data/database";
 import { Index } from "./controller";
 import { MetronomeCounterInternal } from "./InternalMetronome";
 import { Back, Beginning, End, Forward, Play } from "./controls";
+import { Flex } from "@radix-ui/themes";
 
 // https://coolors.co/091540-7692ff-abd2fa-3d518c-1b2cc1
 // #091540
@@ -89,7 +90,7 @@ export const SectionalMetronome = ({ song }: { song: SongType }) => {
     >
       <SectionalMetronomeBars state={state} />
     </MetronomeCounterInternal>
-    <div style={{ display: 'flex', justifyContent: 'center', margin: '2em' }}>
+    <Flex justify='center' gap='2'>
       <Beginning onClick={() => { 
         state.setIndex(state.controller.previousSection());
       }}/>
@@ -105,6 +106,6 @@ export const SectionalMetronome = ({ song }: { song: SongType }) => {
       <End onClick={() => {
         state.setIndex(state.controller.nextSection());
       }}/>
-    </div>
+    </Flex>
   </>
 }

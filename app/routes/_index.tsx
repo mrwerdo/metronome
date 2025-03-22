@@ -1,12 +1,20 @@
 import { StandaloneMetronome } from "~/metronome/views";
+import { SongList, loader, action } from "./songs._index";
+import { Section, Container } from "@radix-ui/themes";
+
+export { loader, action };
 
 export default function Index() {
     return (
       <>
-        <h1 id="index-page">
-          Metromone
-        </h1>
+      <Section size='1'>
         <StandaloneMetronome />
+      </Section>
+      <Section size='1'>
+        <Container>
+          <SongList />
+        </Container>
+      </Section>
       </>
     );
   }

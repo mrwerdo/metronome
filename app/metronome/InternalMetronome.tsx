@@ -59,7 +59,6 @@ export const MetronomeCounterInternal = ({ index, section, isPlaying, children, 
     <>
       <div ref={div} tabIndex={0} onKeyDown={keypress}>
         <div>
-          <p>Counter: {index.counter}, Normalized Counter: {index.subBeat}</p>
           <p style={{ fontSize: 100, textAlign: "center", margin: 0 }}>{(index.beat) + 1}.<span style={{ fontSize: 50 }}>{index.subBeat + 1}</span></p>
         </div>
         <div style={{

@@ -19,6 +19,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@radix-ui/react-icons": "^1.3.2",
     "@radix-ui/themes": "^3.2.1",
     "@remix-run/cloudflare": "^2.10.3",
     "@remix-run/cloudflare-pages": "^2.10.3",
@@ -27,12 +28,14 @@
     "kysely": "^0.27.4",
     "kysely-d1": "^0.3.0",
     "match-sorter": "^6.3.1",
+    "next-themes": "^0.4.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "remixicon": "^4.6.0",
     "sort-by": "^1.2.0",
     "tiny-invariant": "^1.3.1",
-    "tone": "^15.0.4"
+    "tone": "^15.0.4",
+    "vite-plugin-svgr": "^4.3.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240512.0",

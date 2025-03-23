@@ -13,7 +13,7 @@ import {
 
 import { createSong, getSongs } from "~/data/database";
 import { useEffect } from "react";
-import { Text, Table, TextField, IconButton, Flex, Box } from "@radix-ui/themes";
+import { Text, Table, TextField, IconButton, Flex, Box, Badge } from "@radix-ui/themes";
 import { MagnifyingGlassIcon, PlusIcon, StarFilledIcon, StarIcon } from "@radix-ui/react-icons";
 
 export const action = async ({ context, request }: ActionFunctionArgs) => {
@@ -32,6 +32,21 @@ export const loader = async ({
   let songs = await getSongs(db, q);
   return json({ songs, q });
 };
+
+
+const accentColors = ['gray', 'gold', 'bronze', 'brown', 'yellow', 'amber', 'orange', 'tomato', 'red', 'ruby', 'crimson', 'pink', 'plum', 'purple', 'violet', 'iris', 'indigo', 'blue', 'cyan', 'teal', 'jade', 'green', 'grass', 'lime', 'mint', 'sky'] as const;
+export type ColorForInstrument = typeof accentColors[number];
+
+function colorForInstrument(instrument: string): ColorForInstrument {
+  return ({
+    'violin' : 'lime',
+    'guitar' : 'ruby',
+    'piano' : 'indigo',
+    'voice' : 'pink',
+    'flute' : 'blue',
+    'drums' : 'gold'
+  }[instrument.toLowerCase()] ?? 'gray') as ColorForInstrument;
+}
 
 export { SongList }
 export default function SongList() {
@@ -92,7 +107,11 @@ export default function SongList() {
                       <Text size='3'>{song.name ? song.name : (<i>No Name</i>)}</Text>
                     </Link>
                   </Table.Cell>
-                  <Table.Cell><Text size='3'>{song.instrument}</Text></Table.Cell>
+                  <Table.Cell>
+                    <Badge size='3' color={colorForInstrument(song.instrument)}>
+                      {song.instrument}
+                    </Badge>
+                  </Table.Cell>
                 </Table.Row>
               ))}
             </Table.Body>

@@ -1,5 +1,5 @@
 import { json } from "@remix-run/cloudflare";
-import { Form, useLoaderData, useFetcher, useSubmit, Outlet, Link } from "@remix-run/react";
+import { Form, useLoaderData, useFetcher, useSubmit, Outlet } from "@remix-run/react";
 import React, { DetailedHTMLProps, HTMLAttributes, useEffect, useLayoutEffect, useRef, useState, type FunctionComponent } from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/cloudflare";
 import invariant from "tiny-invariant";
@@ -7,11 +7,14 @@ import { getSong, setFavorite, updateSong } from "~/data/database";
 import type { SectionType, SongType } from "~/data/database";
 import { SectionalMetronome } from "~/metronome/views";
 import { MetronomeStateSnapshot, useMetronomeState } from "~/metronome/useMetronomeState";
-import { Faster, PlusMinusControl, Slower } from '~/metronome/controls';
+import { Faster, Play, PlusMinusControl, Slower } from '~/metronome/controls';
 import { Settings } from '../metronome/controls';
 import { Index, Section, Song } from "~/metronome/controller";
 import { tempoGivenBpm } from "~/metronome/bpm";
-import { Box, Button, Container, Flex, IconButton, Slider, TextField } from "@radix-ui/themes";
+import { HomeIcon, RowsIcon } from "@radix-ui/react-icons";
+import { Link, Box, Button, Container, Flex, IconButton, Slider, TextField, Heading, Badge, ScrollArea } from "@radix-ui/themes";
+import { MetronomeCounterInternal } from "~/metronome/InternalMetronome";
+import { PlayPauseControls, SectionalMetronomeBars } from "~/metronome/SectionalMetronome";
 
 export const loader = async ({
   params,
@@ -142,18 +145,20 @@ const TempoControl = ({ state, song, setIsDirty } : { state:  MetronomeStateSnap
     }
   }
 
-  return <div>
-    <div ref={containerRef} style={{ width: '28em', overflowX: 'scroll', whiteSpace: 'nowrap', scrollbarWidth: 'none'}}>
+  return <>
+    <Box ref={containerRef} width={{initial: '80vw', lg: '28em'}} style={{ overflowX: 'scroll', whiteSpace: 'nowrap', scrollbarWidth: 'none'}}>
       <div style={{display: 'grid', gridAutoFlow: 'column', gridAutoColumns: 'minmax(2em, 1fr)', gap: '10px', alignItems: 'baseline'}}>
         { tempoButtons }
       </div>
-    </div>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 4fr 1fr', alignItems: 'center', justifyItems: 'center', marginBottom: '1em' }}>
+
+    </Box>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 4fr 1fr', alignItems: 'center', justifyItems: 'center', marginBottom: '1em', gap: '0.5em' }}>
+      <Play isPlaying={state.isPlaying ?? false} onClick={() => state.toggleIsPlaying()} />
       <Slower onClick={slower} />
       <p>{tempo.name}</p>
       <Faster onClick={faster} />
     </div>
-  </div>
+  </>
 };
 
 export default function Songs() {
@@ -179,12 +184,14 @@ export default function Songs() {
   const currentSectionName = state.index.isNotAnIndex() ? '' : song.sections[state.index.section].name;
 
   return (
-    <Container size='3'>
-      <div>
-          <h1>
-            {song.name ? song.name : (<i>No Name</i>)}
-          </h1>
-          <p>{song.instrument}</p>
+    <Container size='3' p='4'>
+      <Box p='1' style={{ backgroundColor: 'var(--accent-1)', position: 'sticky', top: '0', zIndex: 1 }}>
+        <Container>
+          <Flex mb='4' align='baseline'>
+            <Heading size='7' ml='auto' mr='auto'>
+              {song.name ? song.name : (<i>No Name</i>)}
+            </Heading>
+          </Flex>
           <Flex gap='2'>
             <Favorite song={song} />
             <Form action="edit">
@@ -218,6 +225,11 @@ export default function Songs() {
             }}>
               <Button type="submit">Paste</Button>
             </Form>
+            <IconButton ml='auto' variant='soft'>
+              <Link href="/">
+                <HomeIcon />
+              </Link>
+            </IconButton>
           </Flex>
           <div>
             <label htmlFor="volume">Volume: </label>
@@ -230,140 +242,139 @@ export default function Songs() {
               onValueChange={handleVolumeChange}
             />
           </div>
-        <Outlet />
-      </div>
-      <SectionalMetronome song={song}  />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', justifyItems: 'center', margin: '2em' }}>
-        <div>
-        </div>
-        <TempoControl state={state} song={song} setIsDirty={setIsDirty} />
-        <div></div>
-        <div></div>
-        <Flex justify='center' gap='1'>
-          <PlusMinusControl
-            name="Sub-beat" 
-            onIncrease={() => {
-              if (!state.index.isNotAnIndex()) {
-                const section = song.sections[state.index.section];
-                // is this modifying the loader data?
-                section.numberOfSubBeats += 1;
-                state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
-                setIsDirty(true);
-              }
-            }}
-            onDecrease={() => {
-              if (!state.index.isNotAnIndex()) {
-                const section = song.sections[state.index.section];
-                if (section.numberOfSubBeats > 0) {
-                  section.numberOfSubBeats -= 1;
+          <Outlet />
+        </Container>
+        <MetronomeCounterInternal state={state} />
+      </Box>
+      <SectionalMetronomeBars state={state} />
+      <Box style={{backgroundColor: 'var(--accent-1)', position: 'sticky', bottom: '0', zIndex: 1}}>
+        {/* <PlayPauseControls state={state} /> */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'auto', alignItems: 'center', justifyItems: 'center' }}>
+          <TempoControl state={state} song={song} setIsDirty={setIsDirty} />
+          <Flex justify='center' gap='1'>
+            <PlusMinusControl
+              name="Sub-beat" 
+              onIncrease={() => {
+                if (!state.index.isNotAnIndex()) {
+                  const section = song.sections[state.index.section];
+                  // is this modifying the loader data?
+                  section.numberOfSubBeats += 1;
                   state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
                   setIsDirty(true);
                 }
-              }
-            }}
-          />
-          <PlusMinusControl
-            name="Beat" 
-            onIncrease={() => {
-              if (!state.index.isNotAnIndex()) {
-                const section = song.sections[state.index.section];
-                section.numberOfBeats += 1;
-                state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
-                setIsDirty(true);
-              }
-            }}
-            onDecrease={() => {
-              if (!state.index.isNotAnIndex()) {
-                const section = song.sections[state.index.section];
-                if (section.numberOfBeats > 1) {
-                  section.numberOfBeats -= 1;
+              }}
+              onDecrease={() => {
+                if (!state.index.isNotAnIndex()) {
+                  const section = song.sections[state.index.section];
+                  if (section.numberOfSubBeats > 0) {
+                    section.numberOfSubBeats -= 1;
+                    state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
+                    setIsDirty(true);
+                  }
+                }
+              }}
+            />
+            <PlusMinusControl
+              name="Beat" 
+              onIncrease={() => {
+                if (!state.index.isNotAnIndex()) {
+                  const section = song.sections[state.index.section];
+                  section.numberOfBeats += 1;
                   state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
                   setIsDirty(true);
                 }
-              }
-            }}
-          />
-          <PlusMinusControl
-            name="Bar" 
-            onIncrease={() => {
-              if (!state.index.isNotAnIndex()) {
-                const section = song.sections[state.index.section];
-                section.numberOfBars += 1;
-                state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
-                setIsDirty(true);
-              }
-            }}
-            onDecrease={() => {
-              if (!state.index.isNotAnIndex()) {
-                const section = song.sections[state.index.section];
-                if (section.numberOfBars > 1) {
-                  section.numberOfBars -= 1;
+              }}
+              onDecrease={() => {
+                if (!state.index.isNotAnIndex()) {
+                  const section = song.sections[state.index.section];
+                  if (section.numberOfBeats > 1) {
+                    section.numberOfBeats -= 1;
+                    state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
+                    setIsDirty(true);
+                  }
+                }
+              }}
+            />
+            <PlusMinusControl
+              name="Bar" 
+              onIncrease={() => {
+                if (!state.index.isNotAnIndex()) {
+                  const section = song.sections[state.index.section];
+                  section.numberOfBars += 1;
                   state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
                   setIsDirty(true);
                 }
-              }
-            }}
-          />
-          <PlusMinusControl
-            name="Section" 
-            onIncrease={() => {
-              if (!state.index.isNotAnIndex()) {
-                const section: SectionType = {
-                  id: state.index.section,
-                  name: `Section ${state.index.section}`,
-                  bpm: 120,
-                  numberOfBeats: 4,
-                  numberOfSubBeats: 4,
-                  delay: 0,
-                  numberOfBars: 4
+              }}
+              onDecrease={() => {
+                if (!state.index.isNotAnIndex()) {
+                  const section = song.sections[state.index.section];
+                  if (section.numberOfBars > 1) {
+                    section.numberOfBars -= 1;
+                    state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
+                    setIsDirty(true);
+                  }
                 }
-                const temporarySong = new Song(song);
-                const index = temporarySong.indexAtCoordinates(state.index.section + 1, 0, 0, 0);
-                song.sections.splice(state.index.section + 1, 0, section)
-                state.metronome?.setSongWithIndex(song, index);
-                setIsDirty(true);
-              }
-            }}
-            onDecrease={() => {
-              if (!state.index.isNotAnIndex()) {
-                if (song.sections.length > 1) {
-                  song.sections.splice(state.index.section, 1);
+              }}
+            />
+            <PlusMinusControl
+              name="Section" 
+              onIncrease={() => {
+                if (!state.index.isNotAnIndex()) {
+                  const section: SectionType = {
+                    id: state.index.section,
+                    name: `Section ${state.index.section}`,
+                    bpm: 120,
+                    numberOfBeats: 4,
+                    numberOfSubBeats: 4,
+                    delay: 0,
+                    numberOfBars: 4
+                  }
                   const temporarySong = new Song(song);
-                  const index = temporarySong.indexAtCoordinates(Math.max(state.index.section + -1, 0), 0, 0, 0);
+                  const index = temporarySong.indexAtCoordinates(state.index.section + 1, 0, 0, 0);
+                  song.sections.splice(state.index.section + 1, 0, section)
                   state.metronome?.setSongWithIndex(song, index);
                   setIsDirty(true);
                 }
-              }
-            }}
-          />
-        </Flex>
-        <div style={{margin: '1em'}}>
-          <Form style={{ visibility: isDirty ? 'visible' : 'hidden' }} action="save" method="post" onSubmit={(event) => {
-            event.preventDefault();
-            const formData = new FormData();
-            const textData = JSON.stringify(song, null, 2)
-            formData.append('data', textData);
-            formData.append('action', 'save');
-            submit(formData, { method: 'post' });
-          }}>
-            <Button type="submit">Save</Button>
-          </Form>
+              }}
+              onDecrease={() => {
+                if (!state.index.isNotAnIndex()) {
+                  if (song.sections.length > 1) {
+                    song.sections.splice(state.index.section, 1);
+                    const temporarySong = new Song(song);
+                    const index = temporarySong.indexAtCoordinates(Math.max(state.index.section + -1, 0), 0, 0, 0);
+                    state.metronome?.setSongWithIndex(song, index);
+                    setIsDirty(true);
+                  }
+                }
+              }}
+            />
+          </Flex>
+          <div style={{marginTop: '1em', marginBottom: '1em'}}>
+            <Flex gap='2'>
+              <label htmlFor="sectionName">Rename</label>
+              <TextField.Root id="sectionName" name="sectionName" type="text" value={currentSectionName} onChange={(event) => {
+                const text = event.target.value
+                if (state.index.isNotAnIndex()) {
+                  return;
+                }
+                song.sections[state.index.section].name = text;
+                state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
+                setIsDirty(true);
+              }}></TextField.Root>
+              <Form style={{ visibility: isDirty ? 'visible' : 'hidden' }} action="save" method="post" onSubmit={(event) => {
+                event.preventDefault();
+                const formData = new FormData();
+                const textData = JSON.stringify(song, null, 2)
+                formData.append('data', textData);
+                formData.append('action', 'save');
+                submit(formData, { method: 'post' });
+              }}>
+                <Button type="submit">Save</Button>
+              </Form>
+            </Flex>
+          </div>
         </div>
-        <div></div>
-        <div style={{marginTop: '2em', marginBottom: '2em'}}>
-          <label htmlFor="sectionName">Rename</label>
-          <TextField.Root id="sectionName" name="sectionName" type="text" value={currentSectionName} onChange={(event) => {
-            const text = event.target.value
-            if (state.index.isNotAnIndex()) {
-              return;
-            }
-            song.sections[state.index.section].name = text;
-            state.metronome?.setSongWithIndex(song, state.controller.currentIndex);
-            setIsDirty(true);
-          }}></TextField.Root>
-        </div>
-        <div></div>
-      </div>
+      </Box>
     </Container>
   );
 }

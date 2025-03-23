@@ -26,6 +26,7 @@ const BeatsInBar = ({ isHighlightedBar, isHighlightedBeat, numberOfBeats } : { i
   if (isHighlightedBar) {
     style['backgroundColor'] = 'var(--gray-4)';
   }
+
   return <svg viewBox="0 0 32 32" style={style}>
     <g stroke="none" strokeWidth="2" fill="none" fillRule="evenodd">
         {/* Vertical Line */}
@@ -41,7 +42,7 @@ const BeatsInBar = ({ isHighlightedBar, isHighlightedBeat, numberOfBeats } : { i
   </svg>
 };
 
-const SectionalMetronomeBars = ({ state } : { state: MetronomeStateSnapshot } ) => {
+export const SectionalMetronomeBars = ({ state } : { state: MetronomeStateSnapshot } ) => {
   const setIndex = (event: React.MouseEvent<HTMLDivElement>, index: Index) => {
     event.stopPropagation();
     state.setIndex(index);
@@ -72,40 +73,30 @@ const SectionalMetronomeBars = ({ state } : { state: MetronomeStateSnapshot } ) 
     return <div className="grid-container">{ bars }</div>;
 }
 
+export const PlayPauseControls = ({ state }: { state: MetronomeStateSnapshot }) => {
+  return <Flex justify='center' gap='2'>
+    <Beginning onClick={() => {
+      state.setIndex(state.controller.previousSection());
+    }} />
+    <Back onClick={() => {
+      console.log('back');
+      state.setIndex(state.controller.previousBar());
+    }} />
+    <Play isPlaying={state.isPlaying ?? false} onClick={() => state.toggleIsPlaying()} />
+    <Forward onClick={() => {
+      state.setIndex(state.controller.nextBarIndex(state.controller.currentIndex));
+    }} />
+    <End onClick={() => {
+      state.setIndex(state.controller.nextSection());
+    }} />
+  </Flex>
+}
+
 export const SectionalMetronome = ({ song }: { song: SongType }) => {
   const state = useMetronomeState(song);
-  const handleClick = () => {
-    state.toggleIsPlaying();
-  }
- 
-  const currentSection = state.controller.sectionAtIndex(state.index) ?? null;
-
   return <>
-    <MetronomeCounterInternal
-      startStopEvent={handleClick}
-      index={state.index}
-      isLoaded={state.isLoaded}
-      section={currentSection}
-      isPlaying={state.isPlaying ?? null}
-    >
-      <SectionalMetronomeBars state={state} />
-    </MetronomeCounterInternal>
-    <Flex justify='center' gap='2'>
-      <Beginning onClick={() => { 
-        state.setIndex(state.controller.previousSection());
-      }}/>
-      <Back onClick={() => {
-        console.log('back');
-        // state.setIndex(state.controller.)
-        state.setIndex(state.controller.previousBar());
-      }}/>
-      <Play isPlaying={state.isPlaying ?? false} onClick={handleClick}/>
-      <Forward onClick={() => {
-        state.setIndex(state.controller.nextBarIndex(state.controller.currentIndex));
-      }} />
-      <End onClick={() => {
-        state.setIndex(state.controller.nextSection());
-      }}/>
-    </Flex>
+    <MetronomeCounterInternal state={state} />
+    <SectionalMetronomeBars state={state} />
+    <PlayPauseControls state={state} />
   </>
 }

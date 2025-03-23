@@ -11,7 +11,7 @@ export default function Index() {
         <StandaloneMetronome />
       </Section>
       <Section size='1'>
-        <Container>
+        <Container p='4'>
           <SongList />
         </Container>
       </Section>

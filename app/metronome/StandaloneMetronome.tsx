@@ -35,13 +35,7 @@ export const StandaloneMetronome = () => {
   const section = state.controller.sectionAtIndex(state.index) ?? null;
 
   return <>
-    <MetronomeCounterInternal
-      startStopEvent={handleClick}
-      section={section}
-      index={state.index}
-      isLoaded={state.isLoaded}
-      isPlaying={state.isPlaying ?? null}
-    />
+    <MetronomeCounterInternal state={state} />
     <div style={{display: 'flex', justifyContent: 'center'}}>
       <Play isPlaying={state.isPlaying ?? false} onClick={handleClick}/>
     </div>

@@ -1,14 +1,6 @@
 import { Index, Section } from "./controller";
 import React, { useEffect, createRef, KeyboardEvent } from "react";
-
-interface MetronomeCounterInternalProps {
-  startStopEvent: () => void
-  index: Index
-  section: Section | null
-  isPlaying: boolean | null
-  isLoaded: boolean
-  children?: React.ReactNode
-}
+import { MetronomeStateSnapshot } from "./useMetronomeState";
 
 const BeatsAndSubBeatsVisualizer = ({numberOfBeats, numberOfSubBeats, currentIndex } : { numberOfBeats: number, numberOfSubBeats: number, currentIndex: Index}) => {
   const elements: React.ReactNode[] = [];
@@ -23,7 +15,7 @@ const BeatsAndSubBeatsVisualizer = ({numberOfBeats, numberOfSubBeats, currentInd
         fontWeight: isCurrentBeatAndSubBeat ? 'bold' : 'normal',
         width: '20px',
         alignContent: 'end',
-        height: isFirstBeat ? '100px' : '30px',
+        height: isFirstBeat ? '30px' : '10px',
         backgroundColor: isCurrentBeatAndSubBeat ? 'var(--accent-indicator)' : (isFirstBeat ? 'var(--gray-9)' : 'var(--gray-5)'),
         borderRadius: '2px',
       };
@@ -38,7 +30,9 @@ const BeatsAndSubBeatsVisualizer = ({numberOfBeats, numberOfSubBeats, currentInd
   </>;
 }
 
-export const MetronomeCounterInternal = ({ index, section, isPlaying, children, startStopEvent } : MetronomeCounterInternalProps) => {
+export const MetronomeCounterInternal = ({ state } : { state: MetronomeStateSnapshot}) => {
+  const section = state.controller.sectionAtIndex(state.index) ?? null;
+  const index = state.index;
   const div = createRef<HTMLDivElement>();
 
   useEffect(() => {
@@ -48,7 +42,7 @@ export const MetronomeCounterInternal = ({ index, section, isPlaying, children, 
   const keypress = (event: KeyboardEvent) => {
     if (event.key === ' ') {
       event.preventDefault();
-      startStopEvent();
+      state.toggleIsPlaying();
     }
   }
 
@@ -58,9 +52,7 @@ export const MetronomeCounterInternal = ({ index, section, isPlaying, children, 
   return (
     <>
       <div ref={div} tabIndex={0} onKeyDown={keypress}>
-        <div>
-          <p style={{ fontSize: 100, textAlign: "center", margin: 0 }}>{(index.beat) + 1}.<span style={{ fontSize: 50 }}>{index.subBeat + 1}</span></p>
-        </div>
+        <p style={{ fontSize: 50, textAlign: "center", margin: 0 }}>{(index.beat) + 1}.<span style={{ fontSize: 25 }}>{index.subBeat + 1}</span></p>
         <div style={{
           display: 'grid',
           gridTemplateRows: '1fr',
@@ -72,7 +64,6 @@ export const MetronomeCounterInternal = ({ index, section, isPlaying, children, 
         }}>
           <BeatsAndSubBeatsVisualizer numberOfBeats={numberOfBeats} numberOfSubBeats={numberOfSubBeats} currentIndex={index} />
         </div>
-        { children }
       </div>
     </>
   );

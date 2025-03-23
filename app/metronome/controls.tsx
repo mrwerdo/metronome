@@ -80,18 +80,18 @@ export const Settings = (props: {onClick: () => void}) => {
 export const Faster = (props: {onClick: () => void}) => {
   const style={width: 30, height: 30}
   return (
-    <button style={{padding: '0.5em'}} onClick={props.onClick}>
-      <FasterSvg style={style} />
-    </button>
+    <IconButton variant='soft' size='4' onClick={props.onClick}>
+        <FasterSvg style={style} />
+    </IconButton>
   )
 }
 
 export const Slower = (props: {onClick: () => void}) => {
   const style={width: 30, height: 30}
   return (
-    <button style={{padding: '0.5em'}} onClick={props.onClick}>
-      <SlowerSvg style={style} />
-    </button>
+    <IconButton variant='soft' size='4' onClick={props.onClick}>
+        <SlowerSvg style={style} />
+    </IconButton>
   )
 }
 
@@ -110,7 +110,7 @@ export const PlusMinusControl = ({ name, onIncrease, onDecrease } : { name: stri
     borderBottomColor: '#ABD2FA',
     borderBottomStyle: 'solid',
     }}>{name}</p>  
-    <button style={{gridArea: 'b', margin: '0.5em'}} onClick={onDecrease}>-1</button>
-    <button style={{gridArea: 'c', margin: '0.5em'}} onClick={onIncrease}>+1</button>
+    <IconButton variant='soft' style={{gridArea: 'b', margin: '0.5em', marginRight: '0'}} onClick={onDecrease}>-1</IconButton>
+    <IconButton variant='soft' style={{gridArea: 'c', margin: '0.5em', marginLeft: '0'}} onClick={onIncrease}>+1</IconButton>
   </div>
 };

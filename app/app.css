@@ -410,7 +410,7 @@ div:focus-visible {
 .grid-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, 100px);
-  grid-template-rows: repeat(auto-fit, auto [section] 100px [bar] auto [state]);
+/*  grid-template-rows: repeat(auto-fit, [section] 24px [section bar] 100px [bar] 24px [bar state]);*/
   grid-auto-flow: row;
   justify-content: center;
   align-items: center;
@@ -421,7 +421,7 @@ div:focus-visible {
   height: 100px;
   margin: 2px;
   align-items: end;
-  justify-content: start;
+  /* justify-content: start; */
   display: grid;
   grid-template-rows: subgrid;
   grid-row: span 3;
